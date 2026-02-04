@@ -74,7 +74,7 @@ int App::Run() {
     if (config_.enable_imgui) {
       debug_ui_.BeginFrame();
       debug_ui_.Draw(console_);
-      debug_ui_.EndFrame(sdl_.GetRenderer());
+      debug_ui_.EndFrame();
     }
 #endif
   }

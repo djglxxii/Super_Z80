@@ -102,12 +102,12 @@ void DebugUI::Draw(const sz::console::SuperZ80Console& console) {
   ImGui::End();
 }
 
-void DebugUI::EndFrame(SDL_Renderer* renderer) {
+void DebugUI::EndFrame() {
   if (!initialized_) {
     return;
   }
   ImGui::Render();
-  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer);
+  ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData());
 }
 
 }  // namespace sz::debugui
