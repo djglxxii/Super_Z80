@@ -28,11 +28,14 @@ struct Z80ExCallbacks {
     self->bus_.Write8(static_cast<uint16_t>(addr), static_cast<uint8_t>(value));
   }
 
-  static Z80EX_BYTE PortRead(Z80EX_CONTEXT* /*cpu*/, Z80EX_WORD /*port*/, void* /*user_data*/) {
-    return 0xFF;
+  static Z80EX_BYTE PortRead(Z80EX_CONTEXT* /*cpu*/, Z80EX_WORD port, void* user_data) {
+    auto* self = static_cast<Z80ExCpu*>(user_data);
+    return self->bus_.In8(static_cast<uint8_t>(port & 0xFF));
   }
 
-  static void PortWrite(Z80EX_CONTEXT* /*cpu*/, Z80EX_WORD /*port*/, Z80EX_BYTE /*value*/, void* /*user_data*/) {
+  static void PortWrite(Z80EX_CONTEXT* /*cpu*/, Z80EX_WORD port, Z80EX_BYTE value, void* user_data) {
+    auto* self = static_cast<Z80ExCpu*>(user_data);
+    self->bus_.Out8(static_cast<uint8_t>(port & 0xFF), static_cast<uint8_t>(value));
   }
 
   static Z80EX_BYTE IntRead(Z80EX_CONTEXT* /*cpu*/, void* /*user_data*/) {

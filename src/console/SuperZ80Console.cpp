@@ -19,7 +19,6 @@ void SuperZ80Console::Reset() {
   scheduler_.Reset();
   bus_.Reset();
   irq_.Reset();
-  cartridge_.Reset();
   ppu_.Reset();
   apu_.Reset();
   dma_.Reset();

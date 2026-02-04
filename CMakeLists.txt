@@ -33,6 +33,7 @@ set(SUPERZ80_CORE_SOURCES
   src/devices/bus/Bus.cpp
   src/devices/cart/Cartridge.cpp
   src/devices/dma/DMAEngine.cpp
+  src/devices/io/IODevice.cpp
   src/devices/input/InputController.cpp
   src/devices/irq/IRQController.cpp
   src/devices/ppu/PPU.cpp

@@ -11,6 +11,8 @@ public:
 
   uint8_t Read8(uint16_t addr) override;
   void Write8(uint16_t addr, uint8_t value) override;
+  uint8_t In8(uint8_t port) override;
+  void Out8(uint8_t port, uint8_t value) override;
 
   const uint8_t* GetRamPtrForDebug() const override;
   uint32_t GetRamSizeForDebug() const override;

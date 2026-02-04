@@ -26,6 +26,13 @@ void Phase1Bus::Write8(uint16_t addr, uint8_t value) {
   }
 }
 
+uint8_t Phase1Bus::In8(uint8_t /*port*/) {
+  return 0xFF;
+}
+
+void Phase1Bus::Out8(uint8_t /*port*/, uint8_t /*value*/) {
+}
+
 const uint8_t* Phase1Bus::GetRamPtrForDebug() const {
   return wram_.data();
 }

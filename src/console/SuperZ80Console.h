@@ -6,6 +6,7 @@
 #include "devices/bus/Bus.h"
 #include "devices/cart/Cartridge.h"
 #include "devices/dma/DMAEngine.h"
+#include "devices/io/IODevice.h"
 #include "devices/input/InputController.h"
 #include "devices/irq/IRQController.h"
 #include "devices/ppu/PPU.h"
@@ -40,10 +41,11 @@ class SuperZ80Console {
   sz::cpu::DebugState GetCpuDebugState() const;
 
  private:
-  sz::scheduler::Scheduler scheduler_{};
-  sz::bus::Bus bus_{};
+ sz::scheduler::Scheduler scheduler_{};
   sz::irq::IRQController irq_{};
   sz::cart::Cartridge cartridge_{};
+  sz::io::IODevice io_device_{};
+  sz::bus::Bus bus_{cartridge_, io_device_};
   sz::ppu::PPU ppu_{};
   sz::apu::APU apu_{};
   sz::dma::DMAEngine dma_{};
