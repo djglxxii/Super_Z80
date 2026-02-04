@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(SuperZ80 LANGUAGES CXX)
+project(SuperZ80 LANGUAGES CXX C)
 
 option(SUPERZ80_ENABLE_IMGUI "Enable Dear ImGui debug UI" ON)
 option(SUPERZ80_WARNINGS_AS_ERRORS "Treat warnings as errors" OFF)
@@ -11,6 +11,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 include(cmake/Warnings.cmake)
 include(cmake/Sanitizers.cmake)
+include(TestBigEndian)
 
 find_package(SDL2 CONFIG QUIET)
 if (SDL2_FOUND)
@@ -25,6 +26,8 @@ set(SUPERZ80_CORE_SOURCES
   src/console/SuperZ80Console.cpp
   src/core/log/Logger.cpp
   src/core/log/Trace.cpp
+  src/emulator/bus/Phase1Bus.cpp
+  src/emulator/cpu/Z80ExCpu.cpp
   src/cpu/Z80CpuStub.cpp
   src/devices/apu/APU.cpp
   src/devices/bus/Bus.cpp
@@ -34,10 +37,32 @@ set(SUPERZ80_CORE_SOURCES
   src/devices/irq/IRQController.cpp
   src/devices/ppu/PPU.cpp
   src/devices/scheduler/Scheduler.cpp
+  third_party/z80ex/z80ex.c
 )
 
 add_library(superz80_core STATIC ${SUPERZ80_CORE_SOURCES})
+set_source_files_properties(third_party/z80ex/z80ex.c PROPERTIES LANGUAGE C)
 target_include_directories(superz80_core PUBLIC src)
+target_include_directories(superz80_core PRIVATE third_party/z80ex third_party/z80ex/include)
+test_big_endian(SUPERZ80_BIG_ENDIAN)
+if (SUPERZ80_BIG_ENDIAN)
+  set(SUPERZ80_Z80EX_ENDIANNESS WORDS_BIG_ENDIAN)
+else ()
+  set(SUPERZ80_Z80EX_ENDIANNESS WORDS_LITTLE_ENDIAN)
+endif ()
+set(SUPERZ80_Z80EX_API_REVISION 1)
+set(SUPERZ80_Z80EX_VERSION_MAJOR 1)
+set(SUPERZ80_Z80EX_VERSION_MINOR 21)
+set(SUPERZ80_Z80EX_RELEASE_TYPE "")
+set(SUPERZ80_Z80EX_VERSION_STR "${SUPERZ80_Z80EX_API_REVISION}.${SUPERZ80_Z80EX_VERSION_MAJOR}.${SUPERZ80_Z80EX_VERSION_MINOR}${SUPERZ80_Z80EX_RELEASE_TYPE}")
+target_compile_definitions(superz80_core PRIVATE
+  ${SUPERZ80_Z80EX_ENDIANNESS}
+  Z80EX_API_REVISION=${SUPERZ80_Z80EX_API_REVISION}
+  Z80EX_VERSION_MAJOR=${SUPERZ80_Z80EX_VERSION_MAJOR}
+  Z80EX_VERSION_MINOR=${SUPERZ80_Z80EX_VERSION_MINOR}
+  Z80EX_RELEASE_TYPE=\"${SUPERZ80_Z80EX_RELEASE_TYPE}\"
+  Z80EX_VERSION_STR=\"${SUPERZ80_Z80EX_VERSION_STR}\"
+)
 superz80_enable_warnings(superz80_core ${SUPERZ80_WARNINGS_AS_ERRORS})
 if (SUPERZ80_ENABLE_SANITIZERS)
   superz80_enable_sanitizers(superz80_core)
@@ -97,3 +122,9 @@ superz80_enable_warnings(superz80_app ${SUPERZ80_WARNINGS_AS_ERRORS})
 if (SUPERZ80_ENABLE_SANITIZERS)
   superz80_enable_sanitizers(superz80_app)
 endif()
+
+add_executable(cpu_phase1_determinism src/tests/cpu_phase1_determinism.cpp)
+target_include_directories(cpu_phase1_determinism PRIVATE src)
+target_compile_definitions(cpu_phase1_determinism PRIVATE SUPERZ80_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
+target_link_libraries(cpu_phase1_determinism PRIVATE superz80_core)
+superz80_enable_warnings(cpu_phase1_determinism ${SUPERZ80_WARNINGS_AS_ERRORS})
