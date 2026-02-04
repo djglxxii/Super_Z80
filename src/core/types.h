@@ -17,4 +17,10 @@ constexpr int kScreenHeight = 192;
 constexpr int kTotalScanlines = 262;
 constexpr int kVBlankStartScanline = 192;
 
+// Timing constants (per super_z80_emulation_timing_model.md)
+constexpr double kMasterCrystalHz = 21'477'270.0;
+constexpr double kCpuHz = kMasterCrystalHz / 4.0;  // 5'369'317.5 Hz
+constexpr double kLineHz = 15'734.264;
+constexpr double kCpuCyclesPerLine = kCpuHz / kLineHz;  // ~341.3364...
+
 #endif

@@ -28,22 +28,35 @@ void SuperZ80Console::Reset() {
 }
 
 void SuperZ80Console::StepFrame() {
-  scheduler_.BeginFrame();
+  // Phase 3: Use Scheduler::StepOneFrame which internally calls StepOneScanline
+  // exactly 262 times with correct execution order
+  scheduler_.StepOneFrame(*this);
+}
 
-  for (int scanline = 0; scanline < kTotalScanlines; ++scanline) {
-    int cpu_budget = scheduler_.ComputeCpuBudgetTstatesForScanline();
-    cpu_.Step(cpu_budget);
-    irq_.Tick();
-    ppu_.RenderScanline(scanline, framebuffer_);
-    if (scanline == kVBlankStartScanline) {
-      // VBlank boundary hook placeholder.
-    }
-    dma_.Tick();
-    apu_.Tick(cpu_budget);
-    scheduler_.StepScanline();
-  }
+// Scheduler hook implementations (called by Scheduler::StepOneScanline)
+void SuperZ80Console::ExecuteCpu(u32 tstates) {
+  u32 executed = cpu_.Step(tstates);
+  scheduler_.RecordCpuTStatesExecuted(executed);
+}
 
-  scheduler_.EndFrame();
+void SuperZ80Console::TickIRQ() {
+  // Phase 3: IRQ must remain deasserted (no sources)
+  irq_.Tick();
+}
+
+void SuperZ80Console::OnVisibleScanline(u16 scanline) {
+  // Phase 3: PPU stub - maintain Phase 0 test pattern path
+  ppu_.RenderScanline(scanline, framebuffer_);
+}
+
+void SuperZ80Console::TickDMA() {
+  // Phase 3: DMA stub (no-op)
+  dma_.Tick();
+}
+
+void SuperZ80Console::TickAPU(u32 cycles) {
+  // Phase 3: APU stub (no-op)
+  apu_.Tick(cycles);
 }
 
 const sz::ppu::Framebuffer& SuperZ80Console::GetFramebuffer() const {
@@ -57,8 +70,8 @@ sz::ppu::Framebuffer& SuperZ80Console::GetFramebufferMutable() {
 DebugState SuperZ80Console::GetDebugState() const {
   DebugState state;
   auto sched = scheduler_.GetDebugState();
-  state.scanline = sched.scanline;
-  state.frame = sched.frame;
+  state.scanline = sched.current_scanline;
+  state.frame = sched.frame_counter;
   return state;
 }
 

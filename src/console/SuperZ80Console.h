@@ -39,6 +39,13 @@ class SuperZ80Console {
   sz::input::DebugState GetInputDebugState() const;
   sz::cpu::DebugState GetCpuDebugState() const;
 
+  // Scheduler hooks (called by Scheduler::StepOneScanline)
+  void ExecuteCpu(u32 tstates);
+  void TickIRQ();
+  void OnVisibleScanline(u16 scanline);
+  void TickDMA();
+  void TickAPU(u32 cycles);
+
  private:
   sz::scheduler::Scheduler scheduler_{};
   sz::bus::Bus bus_{};

@@ -1,20 +1,24 @@
 #ifndef SUPERZ80_CPU_Z80CPUSTUB_H
 #define SUPERZ80_CPU_Z80CPUSTUB_H
 
+#include "core/types.h"
+
 namespace sz::cpu {
 
 struct DebugState {
-  int last_budget = 0;
+  u32 last_budget = 0;
+  u64 total_tstates_executed = 0;
 };
 
 class Z80CpuStub {
  public:
   void Reset();
-  void Step(int tstates_budget);
+  u32 Step(u32 tstates_budget);  // returns actual T-states executed
   DebugState GetDebugState() const;
 
  private:
-  int last_budget_ = 0;
+  u32 last_budget_ = 0;
+  u64 total_tstates_executed_ = 0;
 };
 
 }  // namespace sz::cpu
