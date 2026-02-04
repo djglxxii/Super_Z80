@@ -3,6 +3,10 @@
 
 #include "core/types.h"
 
+namespace sz::irq {
+class IRQController;
+}
+
 namespace sz::bus {
 
 struct DebugState {
@@ -17,6 +21,12 @@ class Bus {
   u8 In8(u8 port);
   void Out8(u8 port, u8 value);
   DebugState GetDebugState() const;
+
+  // Wire IRQController for I/O port access
+  void SetIRQController(sz::irq::IRQController* irq) { irq_ = irq; }
+
+ private:
+  sz::irq::IRQController* irq_ = nullptr;
 };
 
 }  // namespace sz::bus

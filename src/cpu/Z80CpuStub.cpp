@@ -5,6 +5,7 @@ namespace sz::cpu {
 void Z80CpuStub::Reset() {
   last_budget_ = 0;
   total_tstates_executed_ = 0;
+  int_line_ = false;
 }
 
 u32 Z80CpuStub::Step(u32 tstates_budget) {
@@ -19,6 +20,7 @@ DebugState Z80CpuStub::GetDebugState() const {
   DebugState state;
   state.last_budget = last_budget_;
   state.total_tstates_executed = total_tstates_executed_;
+  state.int_line = int_line_;
   return state;
 }
 

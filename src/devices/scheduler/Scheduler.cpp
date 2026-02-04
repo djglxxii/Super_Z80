@@ -51,29 +51,32 @@ void Scheduler::StepOneScanline(sz::console::SuperZ80Console& console) {
   // 1. Scheduler computes cycles_this_line using accumulator rule
   cycles_this_scanline_ = ComputeCyclesThisLine();
 
-  // 2. CPU executes for exactly cycles_this_line T-states
+  // 2. Phase 4: Scanline start hook (synthetic IRQ trigger + PreCpuUpdate)
+  console.OnScanlineStart(current_scanline_);
+
+  // 3. CPU executes for exactly cycles_this_line T-states
   console.ExecuteCpu(cycles_this_scanline_);
 
-  // 3. IRQController updates /INT line (Phase 3: must remain deasserted)
+  // 4. IRQController PostCpuUpdate (Phase 4: ensure ACK drops /INT immediately)
   console.TickIRQ();
 
-  // 4. If visible scanline (0-191): PPU hook (stub in Phase 3)
+  // 5. If visible scanline (0-191): PPU hook (stub in Phase 3)
   if (current_scanline_ <= 191) {
     console.OnVisibleScanline(current_scanline_);
   }
 
-  // 5. If scanline == 192: enter VBlank (no IRQ in Phase 3)
+  // 6. If scanline == 192: enter VBlank (no IRQ in Phase 4, will be Phase 5)
   if (current_scanline_ == kVBlankStartScanline) {
     vblank_flag_ = true;
   }
 
-  // 6. DMAEngine tick stub (no-op in Phase 3)
+  // 7. DMAEngine tick stub (no-op in Phase 4)
   console.TickDMA();
 
-  // 7. APU tick stub (no-op in Phase 3)
+  // 8. APU tick stub (no-op in Phase 4)
   console.TickAPU(cycles_this_scanline_);
 
-  // 8. Advance scanline
+  // 9. Advance scanline
   current_scanline_++;
   if (current_scanline_ >= kTotalScanlines) {
     current_scanline_ = 0;

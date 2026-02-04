@@ -40,6 +40,7 @@ class SuperZ80Console {
   sz::cpu::DebugState GetCpuDebugState() const;
 
   // Scheduler hooks (called by Scheduler::StepOneScanline)
+  void OnScanlineStart(u16 scanline);  // Phase 4: synthetic IRQ trigger + PreCpuUpdate
   void ExecuteCpu(u32 tstates);
   void TickIRQ();
   void OnVisibleScanline(u16 scanline);
@@ -58,6 +59,9 @@ class SuperZ80Console {
   sz::cpu::Z80CpuStub cpu_{};
 
   sz::ppu::Framebuffer framebuffer_{};
+
+  // Phase 4: synthetic IRQ trigger state
+  bool synthetic_fired_this_frame_ = false;
 };
 
 }  // namespace sz::console

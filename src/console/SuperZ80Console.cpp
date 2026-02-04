@@ -12,6 +12,10 @@ bool SuperZ80Console::PowerOn() {
   framebuffer_.pixels.assign(static_cast<size_t>(kScreenWidth * kScreenHeight), 0xFF000000u);
   SZ_ASSERT(static_cast<int>(framebuffer_.pixels.size()) == kScreenWidth * kScreenHeight);
   SZ_LOG_INFO("SuperZ80Console PowerOn: framebuffer %dx%d", framebuffer_.width, framebuffer_.height);
+
+  // Wire IRQController to Bus for I/O port access
+  bus_.SetIRQController(&irq_);
+
   return true;
 }
 
@@ -25,6 +29,9 @@ void SuperZ80Console::Reset() {
   dma_.Reset();
   input_.Reset();
   cpu_.Reset();
+
+  // Track frame state for synthetic IRQ trigger
+  synthetic_fired_this_frame_ = false;
 }
 
 void SuperZ80Console::StepFrame() {
@@ -34,14 +41,41 @@ void SuperZ80Console::StepFrame() {
 }
 
 // Scheduler hook implementations (called by Scheduler::StepOneScanline)
+void SuperZ80Console::OnScanlineStart(u16 scanline) {
+  // Phase 4: Synthetic IRQ trigger + PreCpuUpdate
+  // Trigger rule: once per frame, at start of scanline 10, raise TIMER pending
+  if (scanline == 10 && !synthetic_fired_this_frame_) {
+    irq_.Raise(static_cast<u8>(sz::irq::IrqBit::Timer));
+    irq_.IncrementSyntheticFireCount();
+    synthetic_fired_this_frame_ = true;
+
+    SZ_LOG_INFO("Phase 4: Synthetic TIMER IRQ raised at scanline 10, frame %llu",
+                static_cast<unsigned long long>(scheduler_.GetFrameCounter()));
+  }
+
+  // Reset synthetic_fired_this_frame at frame boundary (scanline 0)
+  if (scanline == 0) {
+    synthetic_fired_this_frame_ = false;
+  }
+
+  // Recompute /INT before CPU runs this scanline
+  irq_.PreCpuUpdate();
+
+  // Drive CPU's /INT input (level-sensitive)
+  cpu_.SetIntLine(irq_.IntLineAsserted());
+}
+
 void SuperZ80Console::ExecuteCpu(u32 tstates) {
   u32 executed = cpu_.Step(tstates);
   scheduler_.RecordCpuTStatesExecuted(executed);
 }
 
 void SuperZ80Console::TickIRQ() {
-  // Phase 3: IRQ must remain deasserted (no sources)
-  irq_.Tick();
+  // Phase 4: PostCpuUpdate to ensure ACK clears drop /INT immediately
+  irq_.PostCpuUpdate();
+
+  // Update CPU's /INT input after post-CPU update
+  cpu_.SetIntLine(irq_.IntLineAsserted());
 }
 
 void SuperZ80Console::OnVisibleScanline(u16 scanline) {
@@ -88,7 +122,7 @@ sz::bus::DebugState SuperZ80Console::GetBusDebugState() const {
 }
 
 sz::irq::DebugState SuperZ80Console::GetIRQDebugState() const {
-  return irq_.GetDebugState();
+  return irq_.GetDebug(scheduler_.GetCurrentScanline());
 }
 
 sz::ppu::DebugState SuperZ80Console::GetPPUDebugState() const {
