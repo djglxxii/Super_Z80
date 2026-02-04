@@ -27,7 +27,11 @@ set(SUPERZ80_CORE_SOURCES
   src/core/log/Logger.cpp
   src/core/log/Trace.cpp
   src/emulator/bus/Phase1Bus.cpp
+  src/emulator/bus/Phase2Bus.cpp
+  src/emulator/cart/Phase2Cartridge.cpp
   src/emulator/cpu/Z80ExCpu.cpp
+  src/emulator/cpu/Z80ExCpuPhase2.cpp
+  src/emulator/io/IODevice.cpp
   src/cpu/Z80CpuStub.cpp
   src/devices/apu/APU.cpp
   src/devices/bus/Bus.cpp
@@ -128,3 +132,9 @@ target_include_directories(cpu_phase1_determinism PRIVATE src)
 target_compile_definitions(cpu_phase1_determinism PRIVATE SUPERZ80_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
 target_link_libraries(cpu_phase1_determinism PRIVATE superz80_core)
 superz80_enable_warnings(cpu_phase1_determinism ${SUPERZ80_WARNINGS_AS_ERRORS})
+
+add_executable(bus_phase2_tests src/tests/bus_phase2_tests.cpp)
+target_include_directories(bus_phase2_tests PRIVATE src)
+target_compile_definitions(bus_phase2_tests PRIVATE SUPERZ80_SOURCE_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}\")
+target_link_libraries(bus_phase2_tests PRIVATE superz80_core)
+superz80_enable_warnings(bus_phase2_tests ${SUPERZ80_WARNINGS_AS_ERRORS})
