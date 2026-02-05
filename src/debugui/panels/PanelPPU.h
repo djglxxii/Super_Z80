@@ -15,6 +15,7 @@ class PanelPPU {
   void DrawVramViewer(const sz::console::SuperZ80Console& console);
   void DrawTileViewer(const sz::console::SuperZ80Console& console);
   void DrawPaletteViewer(const sz::console::SuperZ80Console& console);
+  void DrawSpritesPanel(const sz::console::SuperZ80Console& console);
 
   // VRAM viewer state
   int vram_view_address_ = 0;
@@ -30,6 +31,10 @@ class PanelPPU {
 
   // Phase 10: Tilemap viewer state
   int tilemap_plane_select_ = 0;      // 0 = Plane A, 1 = Plane B
+
+  // Phase 11: Sprite viewer state
+  int sprite_list_scroll_ = 0;
+  bool sprite_show_all_ = true;  // Show all 48 or just non-zero Y
 };
 
 }  // namespace sz::debugui

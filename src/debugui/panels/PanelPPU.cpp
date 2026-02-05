@@ -10,7 +10,7 @@ void PanelPPU::Draw(const sz::console::SuperZ80Console& console) {
   auto state = console.GetPPUDebugState();
 
   // Status section
-  ImGui::Text("Phase 10: PPU Dual Plane (A + B) + Palette RAM");
+  ImGui::Text("Phase 11: PPU + Sprites");
   ImGui::Separator();
 
   // VBlank status
@@ -23,6 +23,11 @@ void PanelPPU::Draw(const sz::console::SuperZ80Console& console) {
   // Registers panel
   if (ImGui::CollapsingHeader("PPU Registers", ImGuiTreeNodeFlags_DefaultOpen)) {
     DrawRegistersPanel(state);
+  }
+
+  // Phase 11: Sprites panel
+  if (ImGui::CollapsingHeader("Sprites", ImGuiTreeNodeFlags_DefaultOpen)) {
+    DrawSpritesPanel(console);
   }
 
   // Palette viewer (Phase 8)
@@ -396,6 +401,93 @@ void PanelPPU::DrawPaletteViewer(const sz::console::SuperZ80Console& console) {
       int b3 = (packed >> 6) & 0x7;
       ImGui::Text("Entry %d: packed=0x%03X  R=%d G=%d B=%d", entry, packed, r3, g3, b3);
     }
+  }
+}
+
+void PanelPPU::DrawSpritesPanel(const sz::console::SuperZ80Console& console) {
+  auto state = console.GetPPUDebugState();
+  const auto& sprite_state = state.sprite_debug;
+
+  // Sprite system status
+  ImGui::Text("Sprites: %s  SAT Base: 0x%04X",
+              sprite_state.enabled ? "ENABLED" : "DISABLED",
+              sprite_state.sat_base * 256);
+  ImGui::Text("SPR_CTRL: 0x%02X  Overflow: %s",
+              sprite_state.spr_ctrl,
+              sprite_state.overflowLatched ? "YES" : "NO");
+
+  // Last scanline selection info
+  ImGui::Text("Last Scanline %d: %d sprites selected%s",
+              sprite_state.lastSelection.scanline,
+              sprite_state.lastSelection.count,
+              sprite_state.lastSelection.overflowThisLine ? " (OVERFLOW)" : "");
+
+  if (sprite_state.lastSelection.count > 0) {
+    ImGui::Text("  Selected indices:");
+    ImGui::SameLine();
+    for (int i = 0; i < sprite_state.lastSelection.count; ++i) {
+      if (i > 0) ImGui::SameLine();
+      ImGui::Text("%d", sprite_state.lastSelection.indices[i]);
+    }
+  }
+
+  ImGui::Separator();
+
+  // Filter options
+  ImGui::Checkbox("Show all 48 sprites", &sprite_show_all_);
+
+  // Sprite list table
+  if (ImGui::BeginTable("SpriteTable", 8,
+                        ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                        ImGuiTableFlags_ScrollY,
+                        ImVec2(0, 200))) {
+    ImGui::TableSetupColumn("#", ImGuiTableColumnFlags_WidthFixed, 25.0f);
+    ImGui::TableSetupColumn("Y", ImGuiTableColumnFlags_WidthFixed, 30.0f);
+    ImGui::TableSetupColumn("X", ImGuiTableColumnFlags_WidthFixed, 30.0f);
+    ImGui::TableSetupColumn("Tile", ImGuiTableColumnFlags_WidthFixed, 50.0f);
+    ImGui::TableSetupColumn("Pal", ImGuiTableColumnFlags_WidthFixed, 30.0f);
+    ImGui::TableSetupColumn("Behind", ImGuiTableColumnFlags_WidthFixed, 45.0f);
+    ImGui::TableSetupColumn("FlipX", ImGuiTableColumnFlags_WidthFixed, 40.0f);
+    ImGui::TableSetupColumn("FlipY", ImGuiTableColumnFlags_WidthFixed, 40.0f);
+    ImGui::TableSetupScrollFreeze(0, 1);
+    ImGui::TableHeadersRow();
+
+    for (int i = 0; i < 48; ++i) {
+      const auto& sprite = sprite_state.sprites[i];
+
+      // Filter: skip sprites with Y=0 unless showing all
+      if (!sprite_show_all_ && sprite.y == 0 && sprite.x == 0 && sprite.tile == 0) {
+        continue;
+      }
+
+      ImGui::TableNextRow();
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", i);
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", sprite.y);
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", sprite.x);
+
+      ImGui::TableNextColumn();
+      ImGui::Text("0x%03X", sprite.tile);
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%d", sprite.palette);
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", sprite.behindPlaneA ? "Y" : "-");
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", sprite.flipX ? "Y" : "-");
+
+      ImGui::TableNextColumn();
+      ImGui::Text("%s", sprite.flipY ? "Y" : "-");
+    }
+
+    ImGui::EndTable();
   }
 }
 

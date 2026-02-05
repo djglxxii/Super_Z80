@@ -32,6 +32,52 @@ struct PpuRegs {
   u8 pattern_base = 0;     // 0x18: Pattern base selector (shared by both planes, *1024)
 };
 
+// Phase 11: Sprite register set
+// SPR_CTRL bit layout:
+//   bit 0 = SPR_EN (sprite system enabled)
+//   bits 1-2 = SIZE_MODE (00=8x8, 01=8x16, 10=16x16, 11=reserved)
+struct SpriteRegs {
+  u8 spr_ctrl = 0;    // 0x20: sprite control register
+  u8 sat_base = 0;    // 0x21: SAT base (VRAM page index * 256)
+};
+
+// Phase 11: Decoded SAT entry (8 bytes in VRAM)
+struct SpriteEntry {
+  u8 y;               // Byte 0: Y position (0-255)
+  u8 x;               // Byte 1: X position (0-255)
+  u16 tile;           // Bytes 2-3: Tile index (12 bits used)
+  u8 palette;         // Byte 4 bits 0-3: Palette select (0-15)
+  bool behindPlaneA;  // Byte 4 bit 4: Behind Plane A flag
+  bool flipX;         // Byte 4 bit 5: Horizontal flip
+  bool flipY;         // Byte 4 bit 6: Vertical flip
+};
+
+// Phase 11: Per-scanline sprite selection result
+struct SpriteScanlineSelection {
+  u16 scanline = 0;            // Scanline number (0-191)
+  u8 count = 0;                // Number of sprites selected (0-16)
+  u8 indices[16] = {};         // SAT indices of selected sprites (in evaluation order)
+  bool overflowThisLine = false; // True if >16 sprites found on this line
+};
+
+// Phase 11: Sprite pixel candidate for compositing
+struct SpritePixel {
+  bool opaque = false;         // True if this pixel has a sprite
+  u8 colorIndex = 0;           // Palette index (1-15, 0 is transparent)
+  u8 paletteSel = 0;           // Palette select (0-15)
+  bool behindPlaneA = false;   // True if sprite is behind Plane A
+};
+
+// Phase 11: Sprite debug state
+struct SpriteDebugState {
+  bool enabled = false;
+  u8 spr_ctrl = 0;
+  u8 sat_base = 0;
+  bool overflowLatched = false;
+  SpriteEntry sprites[48];               // Decoded view of all 48 SAT entries
+  SpriteScanlineSelection lastSelection; // Last evaluated scanline's selection
+};
+
 // Phase 8: Palette debug tracking
 struct PaletteDebugState {
   u8 pal_addr = 0;                  // Current PAL_ADDR value (0-255)
@@ -55,6 +101,8 @@ struct DebugState {
   PpuRegs pending_regs;
   // Phase 8: Palette debug state
   PaletteDebugState palette_debug;
+  // Phase 11: Sprite debug state
+  SpriteDebugState sprite_debug;
 };
 
 class PPU {
@@ -65,6 +113,13 @@ class PPU {
   // Phase 8: Palette RAM capacity (128 entries, 9-bit RGB)
   static constexpr size_t kPaletteEntries = 128;
   static constexpr size_t kPaletteApertureBytes = 256;  // 128 entries * 2 bytes
+
+  // Phase 11: Sprite constants
+  static constexpr int kSatEntries = 48;           // Number of sprite entries in SAT
+  static constexpr int kSatEntrySize = 8;          // Bytes per SAT entry
+  static constexpr int kMaxSpritesPerScanline = 16; // Hardware limit per scanline
+  static constexpr int kSpriteWidth = 8;           // Phase 11: 8x8 sprites only
+  static constexpr int kSpriteHeight = 8;          // Phase 11: 8x8 sprites only
 
   void Reset();
 
@@ -106,6 +161,10 @@ class PPU {
   // Phase 8: Set current frame for debug tracking
   void SetCurrentFrame(u64 frame) { current_frame_ = frame; }
 
+  // Phase 11: Sprite debug access
+  const SpriteDebugState& GetSpriteDebugState() const;
+  SpriteEntry DecodeSATEntry(int index) const;
+
   DebugState GetDebugState() const;
 
  private:
@@ -134,6 +193,12 @@ class PPU {
 
   // Phase 8: Initialize default palette entries
   void InitDefaultPalette();
+
+  // Phase 11: Sprite evaluation and rendering
+  SpriteScanlineSelection EvaluateSpritesForScanline(int scanline) const;
+  void RenderSpriteLine(int scanline, const SpriteScanlineSelection& selection,
+                        std::array<SpritePixel, 256>& out_line) const;
+  u8 DecodeSpritePixel(u16 tile_index, int x_in_tile, int y_in_tile) const;
 
   int last_scanline_ = -1;
 
@@ -173,6 +238,13 @@ class PPU {
   // Stores palette indices (0-127) before final palette lookup
   mutable std::array<u8, 256> line_plane_a_{};
   mutable std::array<u8, 256> line_plane_b_{};
+
+  // Phase 11: Sprite state
+  SpriteRegs active_sprite_regs_;
+  SpriteRegs pending_sprite_regs_;
+  bool sprite_overflow_latch_ = false;  // SPR_STATUS.OVERFLOW flag (cleared at VBlank start)
+  mutable SpriteScanlineSelection last_sprite_selection_{};  // For debug
+  mutable std::array<SpritePixel, 256> line_sprites_{};  // Sprite line buffer
 };
 
 }  // namespace sz::ppu

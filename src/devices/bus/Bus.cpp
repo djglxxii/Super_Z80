@@ -105,7 +105,8 @@ u8 Bus::In8(u8 port) {
   ++io_reads_;
 
   // Phase 7: PPU I/O ports (0x10-0x1F)
-  if (port >= 0x10 && port <= 0x1F) {
+  // Phase 11: Sprite I/O ports (0x20-0x2F)
+  if (port >= 0x10 && port <= 0x2F) {
     if (ppu_) {
       return ppu_->IoRead(port);
     }
@@ -143,7 +144,8 @@ void Bus::Out8(u8 port, u8 value) {
   ++io_writes_;
 
   // Phase 7: PPU I/O ports (0x10-0x1F)
-  if (port >= 0x10 && port <= 0x1F) {
+  // Phase 11: Sprite I/O ports (0x20-0x2F)
+  if (port >= 0x10 && port <= 0x2F) {
     if (ppu_) {
       ppu_->IoWrite(port, value);
     }

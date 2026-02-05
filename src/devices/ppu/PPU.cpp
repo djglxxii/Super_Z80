@@ -40,6 +40,14 @@ void PPU::Reset() {
   pending_regs_.plane_b_scroll_y = 0;
   pending_regs_.vdp_ctrl = 0x01;         // Display enabled, Plane B disabled (bit 1 = 0)
   active_regs_ = pending_regs_;
+
+  // Phase 11: Reset sprite state
+  pending_sprite_regs_.spr_ctrl = 0;     // Sprites disabled
+  pending_sprite_regs_.sat_base = 0;     // SAT at VRAM 0x0000
+  active_sprite_regs_ = pending_sprite_regs_;
+  sprite_overflow_latch_ = false;
+  last_sprite_selection_ = {};
+  line_sprites_.fill({});
 }
 
 void PPU::InitTestPattern() {
@@ -198,6 +206,32 @@ u8 PPU::IoRead(u8 port) {
       return result;
     }
 
+    // Phase 11: Sprite I/O ports (0x20-0x2F)
+    case 0x20:  // SPR_CTRL (R)
+      return pending_sprite_regs_.spr_ctrl;
+
+    case 0x21:  // SAT_BASE (R)
+      return pending_sprite_regs_.sat_base;
+
+    case 0x22:  // SPR_STATUS (R)
+      // Bit 0: Overflow latch (persists until VBlank start)
+      return sprite_overflow_latch_ ? 0x01 : 0x00;
+
+    case 0x23:  // Reserved
+    case 0x24:
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2A:
+    case 0x2B:
+    case 0x2C:
+    case 0x2D:
+    case 0x2E:
+    case 0x2F:
+      return 0xFF;  // Reserved ports return 0xFF
+
     default:
       return 0xFF;  // Unmapped ports return 0xFF
   }
@@ -251,6 +285,31 @@ void PPU::IoWrite(u8 port, u8 value) {
       break;
     }
 
+    // Phase 11: Sprite I/O ports (0x20-0x2F)
+    case 0x20:  // SPR_CTRL (W)
+      pending_sprite_regs_.spr_ctrl = value;
+      break;
+
+    case 0x21:  // SAT_BASE (W)
+      pending_sprite_regs_.sat_base = value;
+      break;
+
+    case 0x22:  // SPR_STATUS (R) - writes ignored (read-only status register)
+    case 0x23:  // Reserved ports - writes ignored
+    case 0x24:
+    case 0x25:
+    case 0x26:
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2A:
+    case 0x2B:
+    case 0x2C:
+    case 0x2D:
+    case 0x2E:
+    case 0x2F:
+      break;
+
     default:
       // Unmapped ports: writes ignored
       break;
@@ -260,6 +319,9 @@ void PPU::IoWrite(u8 port, u8 value) {
 void PPU::BeginScanline(int scanline) {
   // Phase 7: Latch pending→active at start of every scanline
   active_regs_ = pending_regs_;
+
+  // Phase 11: Latch sprite registers at scanline start
+  active_sprite_regs_ = pending_sprite_regs_;
 
   // Phase 8: Commit palette at scanline start (before rendering)
   PaletteCommitAtScanlineStart(static_cast<int>(current_frame_), scanline);
@@ -271,6 +333,8 @@ void PPU::BeginScanline(int scanline) {
     vblank_flag_ = true;
     last_vblank_latch_scanline_ = static_cast<u16>(scanline);
     vblank_latch_count_++;
+    // Phase 11: Clear sprite overflow latch at VBlank start
+    sprite_overflow_latch_ = false;
   } else if (scanline == 0) {
     vblank_flag_ = false;
   }
@@ -363,15 +427,48 @@ void PPU::RenderScanline(int scanline, Framebuffer& fb) {
                           active_regs_.plane_a_base,
                           line_plane_a_);
 
-  // Step 3: Composite planes (Plane A in front, Plane B behind)
-  // Phase 10 priority rule: palette index 0 is transparent
-  // If Plane A pixel is non-zero, it wins. Otherwise Plane B shows through.
+  // Phase 11: Evaluate and render sprites for this scanline
+  SpriteScanlineSelection sprite_selection = EvaluateSpritesForScanline(scanline);
+
+  // Set overflow latch if this scanline had more than 16 sprites
+  if (sprite_selection.overflowThisLine) {
+    sprite_overflow_latch_ = true;
+  }
+
+  // Store selection for debug purposes
+  last_sprite_selection_ = sprite_selection;
+
+  // Render sprites into line buffer
+  RenderSpriteLine(scanline, sprite_selection, line_sprites_);
+
+  // Step 3: Composite all layers (Plane B, Plane A, Sprites)
+  // Phase 11 compositing rules:
+  //   - Normal sprites (behindPlaneA=0): appear above both planes
+  //   - Behind sprites (behindPlaneA=1): appear between B and A (occluded by A)
   for (int x = 0; x < kScreenWidth; ++x) {
     const u8 pixel_a = line_plane_a_[static_cast<size_t>(x)];
     const u8 pixel_b = line_plane_b_[static_cast<size_t>(x)];
+    const SpritePixel& pixel_s = line_sprites_[static_cast<size_t>(x)];
 
-    // Compositing: A wins if non-transparent, otherwise B
-    const u8 final_index = (pixel_a != 0) ? pixel_a : pixel_b;
+    u8 final_index;
+
+    if (!pixel_s.opaque) {
+      // No sprite pixel: use background composite (A over B)
+      final_index = (pixel_a != 0) ? pixel_a : pixel_b;
+    } else if (!pixel_s.behindPlaneA) {
+      // Normal sprite priority: sprite above both planes
+      // Use sprite palette: palette_base + color_index
+      // Each palette has 16 entries, palette_sel selects which 16-entry bank
+      final_index = static_cast<u8>((pixel_s.paletteSel << 4) | pixel_s.colorIndex);
+    } else {
+      // Behind sprite: sprite between B and A
+      // If Plane A is opaque, A wins. Otherwise sprite wins over B.
+      if (pixel_a != 0) {
+        final_index = pixel_a;
+      } else {
+        final_index = static_cast<u8>((pixel_s.paletteSel << 4) | pixel_s.colorIndex);
+      }
+    }
 
     // Map palette index to ARGB8888 color and store in framebuffer
     fb.pixels[row_offset + static_cast<size_t>(x)] = PaletteToArgb(final_index);
@@ -485,6 +582,9 @@ DebugState PPU::GetDebugState() const {
   state.palette_debug.last_commit_frame = last_pal_commit_frame_;
   state.palette_debug.last_commit_scanline = last_pal_commit_scanline_;
 
+  // Phase 11: Sprite debug state
+  state.sprite_debug = GetSpriteDebugState();
+
   return state;
 }
 
@@ -514,6 +614,158 @@ std::vector<u8> PPU::VramReadWindow(u16 start, size_t count) const {
     result.push_back(vram_[effective]);
   }
   return result;
+}
+
+// Phase 11: Decode a single SAT entry from VRAM
+SpriteEntry PPU::DecodeSATEntry(int index) const {
+  SpriteEntry entry{};
+  if (index < 0 || index >= kSatEntries) {
+    return entry;  // Return zeroed entry for invalid index
+  }
+
+  // Calculate SAT address: sat_base * 256 + index * 8
+  const u32 sat_base_addr = static_cast<u32>(active_sprite_regs_.sat_base) * 256;
+  const u32 entry_addr = (sat_base_addr + static_cast<u32>(index * kSatEntrySize)) % kVramSizeBytes;
+
+  // Read 8 bytes from VRAM
+  entry.y = vram_[entry_addr];
+  entry.x = vram_[(entry_addr + 1) % kVramSizeBytes];
+
+  u8 tile_lo = vram_[(entry_addr + 2) % kVramSizeBytes];
+  u8 tile_hi = vram_[(entry_addr + 3) % kVramSizeBytes];
+  entry.tile = static_cast<u16>(tile_lo) | (static_cast<u16>(tile_hi & 0x0F) << 8);
+
+  u8 attr = vram_[(entry_addr + 4) % kVramSizeBytes];
+  entry.palette = attr & 0x0F;
+  entry.behindPlaneA = (attr & 0x10) != 0;
+  entry.flipX = (attr & 0x20) != 0;
+  entry.flipY = (attr & 0x40) != 0;
+
+  return entry;
+}
+
+// Phase 11: Evaluate which sprites intersect a given scanline
+SpriteScanlineSelection PPU::EvaluateSpritesForScanline(int scanline) const {
+  SpriteScanlineSelection selection{};
+  selection.scanline = static_cast<u16>(scanline);
+
+  // Check if sprites are enabled
+  if ((active_sprite_regs_.spr_ctrl & 0x01) == 0) {
+    return selection;  // Sprites disabled
+  }
+
+  // Iterate through all 48 SAT entries in order
+  for (int i = 0; i < kSatEntries; ++i) {
+    SpriteEntry sprite = DecodeSATEntry(i);
+
+    // Check if sprite intersects this scanline
+    // Using wrap-around semantics: dy = (uint8_t)(scanline - spriteY)
+    // Intersects if dy < height
+    u8 dy = static_cast<u8>(static_cast<u8>(scanline) - sprite.y);
+    if (dy < kSpriteHeight) {
+      // Sprite intersects this scanline
+      if (selection.count < kMaxSpritesPerScanline) {
+        selection.indices[selection.count] = static_cast<u8>(i);
+        selection.count++;
+      } else {
+        // Found the 17th sprite - set overflow flag
+        selection.overflowThisLine = true;
+        break;  // Don't add further sprites
+      }
+    }
+  }
+
+  return selection;
+}
+
+// Phase 11: Decode a sprite tile pixel (reuses tile format from background)
+u8 PPU::DecodeSpritePixel(u16 tile_index, int x_in_tile, int y_in_tile) const {
+  // Same format as background tiles: 4bpp packed
+  // Each tile is 8x8 pixels, 32 bytes total
+  // High nibble = left pixel (even X), low nibble = right pixel (odd X)
+
+  const u32 pattern_base_addr = static_cast<u32>(active_regs_.pattern_base) * 1024;
+  const u32 tile_addr = pattern_base_addr + (static_cast<u32>(tile_index) * 32);
+  const u32 row_offset = static_cast<u32>(y_in_tile) * 4;
+  const u32 byte_offset = static_cast<u32>(x_in_tile) / 2;
+  const u32 pixel_addr = tile_addr + row_offset + byte_offset;
+
+  const u8 byte_value = vram_[pixel_addr % kVramSizeBytes];
+
+  if ((x_in_tile & 1) == 0) {
+    return (byte_value >> 4) & 0x0F;  // High nibble
+  } else {
+    return byte_value & 0x0F;  // Low nibble
+  }
+}
+
+// Phase 11: Render selected sprites into a line buffer
+void PPU::RenderSpriteLine(int scanline, const SpriteScanlineSelection& selection,
+                           std::array<SpritePixel, 256>& out_line) const {
+  // Clear the line buffer
+  out_line.fill({});
+
+  if (selection.count == 0) {
+    return;
+  }
+
+  // Render sprites in REVERSE order (last selected → first selected)
+  // This ensures that earlier SAT indices (higher priority) are drawn last
+  // and thus appear on top
+  for (int i = selection.count - 1; i >= 0; --i) {
+    int sat_index = selection.indices[i];
+    SpriteEntry sprite = DecodeSATEntry(sat_index);
+
+    // Calculate which row of the sprite we're rendering
+    u8 dy = static_cast<u8>(static_cast<u8>(scanline) - sprite.y);
+
+    // Apply vertical flip if needed
+    int src_y = sprite.flipY ? (kSpriteHeight - 1 - dy) : dy;
+
+    // Render each pixel of the sprite
+    for (int sx = 0; sx < kSpriteWidth; ++sx) {
+      // Screen X position (wraps naturally with uint8)
+      u8 screen_x = static_cast<u8>(sprite.x + sx);
+
+      // Apply horizontal flip if needed
+      int src_x = sprite.flipX ? (kSpriteWidth - 1 - sx) : sx;
+
+      // Decode the tile pixel
+      u8 color_index = DecodeSpritePixel(sprite.tile, src_x, src_y);
+
+      // Color index 0 is transparent
+      if (color_index == 0) {
+        continue;
+      }
+
+      // Write to the line buffer (unconditionally overwrite since we're
+      // rendering in reverse priority order - higher priority sprites
+      // drawn last will naturally overwrite lower priority)
+      SpritePixel& pixel = out_line[screen_x];
+      pixel.opaque = true;
+      pixel.colorIndex = color_index;
+      pixel.paletteSel = sprite.palette;
+      pixel.behindPlaneA = sprite.behindPlaneA;
+    }
+  }
+}
+
+// Phase 11: Get sprite debug state
+const SpriteDebugState& PPU::GetSpriteDebugState() const {
+  static SpriteDebugState state;
+
+  state.enabled = (active_sprite_regs_.spr_ctrl & 0x01) != 0;
+  state.spr_ctrl = active_sprite_regs_.spr_ctrl;
+  state.sat_base = active_sprite_regs_.sat_base;
+  state.overflowLatched = sprite_overflow_latch_;
+  state.lastSelection = last_sprite_selection_;
+
+  // Decode all 48 sprite entries for debug view
+  for (int i = 0; i < kSatEntries; ++i) {
+    state.sprites[i] = DecodeSATEntry(i);
+  }
+
+  return state;
 }
 
 }  // namespace sz::ppu
