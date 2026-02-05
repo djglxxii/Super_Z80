@@ -50,14 +50,17 @@ void SuperZ80Console::StepFrame() {
 
 // Scheduler hook implementations (called by Scheduler::StepOneScanline)
 void SuperZ80Console::OnScanlineStart(u16 scanline) {
+  // Phase 8: Update PPU's current frame for debug tracking
+  ppu_.SetCurrentFrame(scheduler_.GetFrameCounter());
+
   // Phase 7: Call PPU's BeginScanline to latch registers and handle VBlank flag
   ppu_.BeginScanline(static_cast<int>(scanline));
 
   // Phase 5: Replace synthetic IRQ with real VBlank IRQ at scanline 192
   if (scanline == kVBlankStartScanline) {
     irq_.Raise(static_cast<u8>(sz::irq::IrqBit::VBlank));
-    SZ_LOG_INFO("Phase 5: VBlank IRQ raised at scanline 192, frame %llu",
-                static_cast<unsigned long long>(scheduler_.GetFrameCounter()));
+    // SZ_LOG_INFO("Phase 5: VBlank IRQ raised at scanline 192, frame %llu",
+    //             static_cast<unsigned long long>(scheduler_.GetFrameCounter()));
   }
 
   // Recompute /INT before CPU runs this scanline

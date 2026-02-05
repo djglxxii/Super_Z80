@@ -20,6 +20,7 @@ namespace sz::dma {
 // Phase 6: DMA_CTRL register bit definitions
 constexpr u8 kDmaCtrlStart = 0x01;              // bit 0: START trigger
 constexpr u8 kDmaCtrlQueueIfNotVBlank = 0x02;   // bit 1: QUEUE_IF_NOT_VBLANK
+constexpr u8 kDmaCtrlDstIsPalette = 0x08;       // bit 3: DST_IS_PALETTE (Phase 8)
 constexpr u8 kDmaCtrlBusy = 0x80;               // bit 7: BUSY (read-only)
 
 // Phase 6: DMA I/O port addresses
@@ -38,17 +39,20 @@ struct DebugState {
   u16 len = 0;
   u8 ctrl = 0;
   bool queue_enabled = false;
+  bool dst_is_palette = false;  // Phase 8: Palette destination flag
 
   // Queued DMA state
   bool queued_valid = false;
   u16 queued_src = 0;
   u16 queued_dst = 0;
   u16 queued_len = 0;
+  bool queued_dst_is_palette = false;  // Phase 8: Queued palette flag
 
   // Last execution tracking
   int last_exec_frame = -1;
   int last_exec_scanline = -1;
   bool last_trigger_was_queued = false;
+  bool last_exec_was_palette = false;  // Phase 8: Last exec was palette DMA
 
   // Error tracking (debug only)
   bool last_illegal_start = false;
@@ -77,7 +81,8 @@ class DMAEngine {
 
  private:
   // Execute DMA transfer (only when vblank_flag is true)
-  void ExecuteDMA(u16 src, u16 dst, u16 len, u64 frame, int scanline);
+  // Phase 8: dst_is_palette selects VRAM vs Palette RAM destination
+  void ExecuteDMA(u16 src, u16 dst, u16 len, bool dst_is_palette, u64 frame, int scanline);
 
   // DMA registers (R/W)
   u8 dma_src_lo_ = 0;
@@ -93,11 +98,13 @@ class DMAEngine {
   u16 queued_src_ = 0;
   u16 queued_dst_ = 0;
   u16 queued_len_ = 0;
+  bool queued_dst_is_palette_ = false;  // Phase 8: Queued palette flag
 
   // Last execution tracking
   int last_exec_frame_ = -1;
   int last_exec_scanline_ = -1;
   bool last_trigger_was_queued_ = false;
+  bool last_exec_was_palette_ = false;  // Phase 8: Last exec was palette DMA
 
   // Debug-only error flag
   bool last_illegal_start_ = false;

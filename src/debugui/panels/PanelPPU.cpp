@@ -1,41 +1,16 @@
 #include "debugui/panels/PanelPPU.h"
 
-#include <array>
-#include <cstdio>
-
 #include <imgui.h>
 
 #include "devices/ppu/PPU.h"
 
 namespace sz::debugui {
 
-namespace {
-// Fixed palette for tile viewer (matches PPU's fixed palette)
-constexpr std::array<u32, 16> kDebugPalette = {{
-    0xFF000000u,  // 0: black
-    0xFF0000AAu,  // 1: dark blue
-    0xFF00AA00u,  // 2: dark green
-    0xFF00AAAAu,  // 3: dark cyan
-    0xFFAA0000u,  // 4: dark red
-    0xFFAA00AAu,  // 5: dark magenta
-    0xFFAA5500u,  // 6: brown
-    0xFFAAAAAAu,  // 7: light gray
-    0xFF555555u,  // 8: dark gray
-    0xFF5555FFu,  // 9: blue
-    0xFF55FF55u,  // 10: green
-    0xFF55FFFFu,  // 11: cyan
-    0xFFFF5555u,  // 12: red
-    0xFFFF55FFu,  // 13: magenta
-    0xFFFFFF55u,  // 14: yellow
-    0xFFFFFFFFu,  // 15: white
-}};
-}  // namespace
-
 void PanelPPU::Draw(const sz::console::SuperZ80Console& console) {
   auto state = console.GetPPUDebugState();
 
   // Status section
-  ImGui::Text("Phase 7: PPU Plane A Renderer");
+  ImGui::Text("Phase 8: PPU Plane A + Palette RAM");
   ImGui::Separator();
 
   // VBlank status
@@ -48,6 +23,11 @@ void PanelPPU::Draw(const sz::console::SuperZ80Console& console) {
   // Registers panel
   if (ImGui::CollapsingHeader("PPU Registers", ImGuiTreeNodeFlags_DefaultOpen)) {
     DrawRegistersPanel(state);
+  }
+
+  // Palette viewer (Phase 8)
+  if (ImGui::CollapsingHeader("Palette Viewer", ImGuiTreeNodeFlags_DefaultOpen)) {
+    DrawPaletteViewer(console);
   }
 
   // VRAM viewer
@@ -190,6 +170,8 @@ void PanelPPU::DrawVramViewer(const sz::console::SuperZ80Console& console) {
 
 void PanelPPU::DrawTileViewer(const sz::console::SuperZ80Console& console) {
   auto state = console.GetPPUDebugState();
+  const auto& ppu = console.GetPPU();
+  const auto& active_rgb = ppu.GetActiveRgb888();
 
   // Tile index input
   ImGui::SetNextItemWidth(100);
@@ -235,8 +217,8 @@ void PanelPPU::DrawTileViewer(const sz::console::SuperZ80Console& console) {
         palette_index = byte_val & 0x0F;
       }
 
-      // Get color from palette
-      u32 color = kDebugPalette[palette_index];
+      // Phase 8: Get color from PPU's active palette
+      u32 color = active_rgb[palette_index];
 
       // Convert ARGB to ImGui color (ABGR)
       u32 imgui_color = (color & 0xFF00FF00u) |               // A and G stay
@@ -265,6 +247,115 @@ void PanelPPU::DrawTileViewer(const sz::console::SuperZ80Console& console) {
     for (int b = 0; b < 4; ++b) {
       ImGui::SameLine();
       ImGui::Text("%02X", tile_data[static_cast<size_t>(row * 4 + b)]);
+    }
+  }
+}
+
+void PanelPPU::DrawPaletteViewer(const sz::console::SuperZ80Console& console) {
+  auto state = console.GetPPUDebugState();
+  const auto& ppu = console.GetPPU();
+
+  // Phase 8: Palette I/O state
+  ImGui::Text("PAL_ADDR: 0x%02X (entry=%d, byte=%s)",
+              state.palette_debug.pal_addr,
+              state.palette_debug.pal_index,
+              state.palette_debug.pal_byte_sel == 0 ? "low" : "high");
+
+  // Last write/commit tracking
+  if (state.palette_debug.last_write_frame >= 0) {
+    ImGui::Text("Last Write: frame %d, scanline %d, entry %d (%s byte)",
+                state.palette_debug.last_write_frame,
+                state.palette_debug.last_write_scanline,
+                state.palette_debug.last_write_entry,
+                state.palette_debug.last_write_byte_sel == 0 ? "low" : "high");
+  } else {
+    ImGui::Text("Last Write: none");
+  }
+
+  if (state.palette_debug.last_commit_frame >= 0) {
+    ImGui::Text("Last Commit: frame %d, scanline %d",
+                state.palette_debug.last_commit_frame,
+                state.palette_debug.last_commit_scanline);
+  } else {
+    ImGui::Text("Last Commit: none");
+  }
+
+  ImGui::Separator();
+
+  // Toggle: Active vs Staged palette view
+  ImGui::Checkbox("Show Staged Palette", &palette_show_staged_);
+  ImGui::SameLine();
+  ImGui::SetNextItemWidth(60);
+  ImGui::InputInt("Swatch Scale", &palette_swatch_scale_, 1, 2);
+  if (palette_swatch_scale_ < 1) palette_swatch_scale_ = 1;
+  if (palette_swatch_scale_ > 8) palette_swatch_scale_ = 8;
+
+  // Get the palette to display
+  const auto& staged_pal = ppu.GetStagedPalette();
+  const auto& active_pal = ppu.GetActivePalette();
+  const auto& active_rgb = ppu.GetActiveRgb888();
+  const auto& display_pal = palette_show_staged_ ? staged_pal : active_pal;
+
+  ImGui::Separator();
+  ImGui::Text("%s Palette (128 entries):", palette_show_staged_ ? "Staged" : "Active");
+
+  // Draw palette grid (16 columns x 8 rows)
+  ImVec2 start_pos = ImGui::GetCursorScreenPos();
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  float swatch_size = static_cast<float>(palette_swatch_scale_ * 8);
+
+  for (int i = 0; i < 128; ++i) {
+    int col = i % 16;
+    int row = i / 16;
+
+    // Get color - expand if needed
+    u32 argb;
+    if (palette_show_staged_) {
+      // Expand staged palette entry manually
+      u16 packed = display_pal[i];
+      int r3 = packed & 0x7;
+      int g3 = (packed >> 3) & 0x7;
+      int b3 = (packed >> 6) & 0x7;
+      int r8 = (r3 * 255) / 7;
+      int g8 = (g3 * 255) / 7;
+      int b8 = (b3 * 255) / 7;
+      argb = 0xFF000000u | (static_cast<u32>(r8) << 16) | (static_cast<u32>(g8) << 8) | static_cast<u32>(b8);
+    } else {
+      argb = active_rgb[i];
+    }
+
+    // Convert ARGB to ImGui color (ABGR)
+    u32 imgui_color = (argb & 0xFF00FF00u) |               // A and G stay
+                      ((argb & 0x00FF0000u) >> 16) |       // R -> B
+                      ((argb & 0x000000FFu) << 16);        // B -> R
+
+    float x1 = start_pos.x + static_cast<float>(col) * swatch_size;
+    float y1 = start_pos.y + static_cast<float>(row) * swatch_size;
+    float x2 = x1 + swatch_size;
+    float y2 = y1 + swatch_size;
+
+    draw_list->AddRectFilled(ImVec2(x1, y1), ImVec2(x2, y2), imgui_color);
+    draw_list->AddRect(ImVec2(x1, y1), ImVec2(x2, y2), 0xFF404040u);  // Grid border
+  }
+
+  // Reserve space for the palette grid
+  float grid_width = 16.0f * swatch_size;
+  float grid_height = 8.0f * swatch_size;
+  ImGui::Dummy(ImVec2(grid_width, grid_height));
+
+  // Show hover info
+  ImVec2 mouse_pos = ImGui::GetMousePos();
+  if (mouse_pos.x >= start_pos.x && mouse_pos.x < start_pos.x + grid_width &&
+      mouse_pos.y >= start_pos.y && mouse_pos.y < start_pos.y + grid_height) {
+    int col = static_cast<int>((mouse_pos.x - start_pos.x) / swatch_size);
+    int row = static_cast<int>((mouse_pos.y - start_pos.y) / swatch_size);
+    int entry = row * 16 + col;
+    if (entry < 128) {
+      u16 packed = display_pal[entry];
+      int r3 = packed & 0x7;
+      int g3 = (packed >> 3) & 0x7;
+      int b3 = (packed >> 6) & 0x7;
+      ImGui::Text("Entry %d: packed=0x%03X  R=%d G=%d B=%d", entry, packed, r3, g3, b3);
     }
   }
 }

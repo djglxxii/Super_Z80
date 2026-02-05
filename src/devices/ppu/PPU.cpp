@@ -11,27 +11,18 @@ void PPU::Reset() {
   // Phase 6: Initialize VRAM (all zeros)
   vram_.assign(kVramSizeBytes, 0x00);
 
-  // Phase 7: Initialize fixed palette (simple 16-color palette for testing)
-  // Colors: black, dark blue, dark green, dark cyan, dark red, dark magenta,
-  //         brown, light gray, dark gray, blue, green, cyan, red, magenta, yellow, white
-  palette_ = {{
-      0xFF000000u,  // 0: black
-      0xFF0000AAu,  // 1: dark blue
-      0xFF00AA00u,  // 2: dark green
-      0xFF00AAAAu,  // 3: dark cyan
-      0xFFAA0000u,  // 4: dark red
-      0xFFAA00AAu,  // 5: dark magenta
-      0xFFAA5500u,  // 6: brown
-      0xFFAAAAAAu,  // 7: light gray
-      0xFF555555u,  // 8: dark gray
-      0xFF5555FFu,  // 9: blue
-      0xFF55FF55u,  // 10: green
-      0xFF55FFFFu,  // 11: cyan
-      0xFFFF5555u,  // 12: red
-      0xFFFF55FFu,  // 13: magenta
-      0xFFFFFF55u,  // 14: yellow
-      0xFFFFFFFFu,  // 15: white
-  }};
+  // Phase 8: Initialize palette RAM with default colors
+  InitDefaultPalette();
+
+  // Phase 8: Reset palette I/O state
+  pal_addr_ = 0;
+  last_pal_write_frame_ = -1;
+  last_pal_write_scanline_ = -1;
+  last_pal_write_entry_ = 0;
+  last_pal_write_byte_sel_ = 0;
+  last_pal_commit_frame_ = -1;
+  last_pal_commit_scanline_ = -1;
+  current_frame_ = 0;
 
   // Phase 7: Initialize test tiles and tilemap for startup display
   // This provides visible output without needing a ROM
@@ -92,6 +83,65 @@ void PPU::InitTestPattern() {
   }
 }
 
+void PPU::InitDefaultPalette() {
+  // Phase 8: Initialize palette with default 16-color palette (CGA-style)
+  // Pack 9-bit RGB as: bits 0-2 = R, bits 3-5 = G, bits 6-8 = B
+  // Each color component is 3-bit (0-7)
+
+  // Helper lambda to pack RGB
+  auto pack_rgb = [](int r, int g, int b) -> u16 {
+    return static_cast<u16>((r & 0x7) | ((g & 0x7) << 3) | ((b & 0x7) << 6));
+  };
+
+  // Default colors (3-bit per channel, 0-7 scale):
+  staged_pal_[0] = pack_rgb(0, 0, 0);   // 0: black
+  staged_pal_[1] = pack_rgb(0, 0, 5);   // 1: dark blue
+  staged_pal_[2] = pack_rgb(0, 5, 0);   // 2: dark green
+  staged_pal_[3] = pack_rgb(0, 5, 5);   // 3: dark cyan
+  staged_pal_[4] = pack_rgb(5, 0, 0);   // 4: dark red
+  staged_pal_[5] = pack_rgb(5, 0, 5);   // 5: dark magenta
+  staged_pal_[6] = pack_rgb(5, 3, 0);   // 6: brown
+  staged_pal_[7] = pack_rgb(5, 5, 5);   // 7: light gray
+  staged_pal_[8] = pack_rgb(3, 3, 3);   // 8: dark gray
+  staged_pal_[9] = pack_rgb(3, 3, 7);   // 9: blue
+  staged_pal_[10] = pack_rgb(3, 7, 3);  // 10: green
+  staged_pal_[11] = pack_rgb(3, 7, 7);  // 11: cyan
+  staged_pal_[12] = pack_rgb(7, 3, 3);  // 12: red
+  staged_pal_[13] = pack_rgb(7, 3, 7);  // 13: magenta
+  staged_pal_[14] = pack_rgb(7, 7, 3);  // 14: yellow
+  staged_pal_[15] = pack_rgb(7, 7, 7);  // 15: white
+
+  // Fill remaining entries with black
+  for (size_t i = 16; i < kPaletteEntries; ++i) {
+    staged_pal_[i] = 0;
+  }
+
+  // Copy to active and expand to RGB888
+  active_pal_ = staged_pal_;
+  for (size_t i = 0; i < kPaletteEntries; ++i) {
+    active_rgb888_[i] = ExpandPaletteEntry(active_pal_[i]);
+  }
+}
+
+u32 PPU::ExpandPaletteEntry(u16 packed) {
+  // Extract 3-bit components from packed 9-bit RGB
+  // Bit layout: bits 0-2 = R, bits 3-5 = G, bits 6-8 = B
+  int r3 = packed & 0x7;
+  int g3 = (packed >> 3) & 0x7;
+  int b3 = (packed >> 6) & 0x7;
+
+  // Expand 3-bit to 8-bit: r8 = (r3 * 255) / 7
+  int r8 = (r3 * 255) / 7;
+  int g8 = (g3 * 255) / 7;
+  int b8 = (b3 * 255) / 7;
+
+  // Pack as ARGB8888 (A=255)
+  return 0xFF000000u |
+         (static_cast<u32>(r8) << 16) |
+         (static_cast<u32>(g8) << 8) |
+         static_cast<u32>(b8);
+}
+
 u8 PPU::IoRead(u8 port) {
   switch (port) {
     case 0x10:  // VDP_STATUS (R)
@@ -112,6 +162,28 @@ u8 PPU::IoRead(u8 port) {
 
     case 0x18:  // PATTERN_BASE (R)
       return pending_regs_.pattern_base;
+
+    case 0x1E: {  // PAL_ADDR (R) - returns current palette byte address
+      return pal_addr_;
+    }
+
+    case 0x1F: {  // PAL_DATA (R) - read byte at current pal_addr, auto-increment
+      u8 pal_index = pal_addr_ >> 1;     // Entry index (0-127)
+      u8 byte_sel = pal_addr_ & 1;       // 0=low byte, 1=high byte
+
+      u16 packed = staged_pal_[pal_index];
+      u8 result;
+      if (byte_sel == 0) {
+        result = static_cast<u8>(packed & 0xFF);       // Low byte (bits 0-7)
+      } else {
+        result = static_cast<u8>((packed >> 8) & 0xFF); // High byte (bits 8-15)
+      }
+
+      // Auto-increment by +1 byte after read
+      pal_addr_++;  // Wraps 0xFF -> 0x00 naturally
+
+      return result;
+    }
 
     default:
       return 0xFF;  // Unmapped ports return 0xFF
@@ -142,6 +214,18 @@ void PPU::IoWrite(u8 port, u8 value) {
       pending_regs_.pattern_base = value;
       break;
 
+    case 0x1E:  // PAL_ADDR (W) - set palette byte address
+      pal_addr_ = value;
+      break;
+
+    case 0x1F: {  // PAL_DATA (W) - write byte at current pal_addr, auto-increment
+      PaletteWriteByte(pal_addr_, value);
+
+      // Auto-increment by +1 byte after write
+      pal_addr_++;  // Wraps 0xFF -> 0x00 naturally
+      break;
+    }
+
     default:
       // Unmapped ports: writes ignored
       break;
@@ -151,6 +235,9 @@ void PPU::IoWrite(u8 port, u8 value) {
 void PPU::BeginScanline(int scanline) {
   // Phase 7: Latch pending→active at start of every scanline
   active_regs_ = pending_regs_;
+
+  // Phase 8: Commit palette at scanline start (before rendering)
+  PaletteCommitAtScanlineStart(static_cast<int>(current_frame_), scanline);
 
   // Phase 5: VBlank flag timing (exact per timing model)
   // vblank_flag = true at START of scanline 192
@@ -162,6 +249,47 @@ void PPU::BeginScanline(int scanline) {
   } else if (scanline == 0) {
     vblank_flag_ = false;
   }
+}
+
+void PPU::PaletteWriteByte(u8 addr, u8 value) {
+  // Phase 8: Write one byte to staged palette
+  // addr is 0-255 byte address into palette aperture (128 entries * 2 bytes)
+  u8 pal_index = addr >> 1;      // Entry index (0-127)
+  u8 byte_sel = addr & 1;        // 0=low byte, 1=high byte
+
+  u16 current = staged_pal_[pal_index];
+
+  if (byte_sel == 0) {
+    // Low byte: bits 0-7
+    current = (current & 0xFF00) | value;
+  } else {
+    // High byte: bits 8-15 (only bit 0 is meaningful for B2)
+    current = (current & 0x00FF) | (static_cast<u16>(value) << 8);
+  }
+
+  // Mask to 9 bits (bits 9-15 are always 0)
+  staged_pal_[pal_index] = current & 0x01FF;
+
+  // Debug tracking
+  last_pal_write_frame_ = static_cast<int>(current_frame_);
+  last_pal_write_scanline_ = last_scanline_;
+  last_pal_write_entry_ = pal_index;
+  last_pal_write_byte_sel_ = byte_sel;
+}
+
+void PPU::PaletteCommitAtScanlineStart(int frame, int scanline) {
+  // Phase 8: Copy staged palette to active palette at scanline start
+  // This ensures no mid-scanline tearing
+  active_pal_ = staged_pal_;
+
+  // Expand to RGB888 for rendering
+  for (size_t i = 0; i < kPaletteEntries; ++i) {
+    active_rgb888_[i] = ExpandPaletteEntry(active_pal_[i]);
+  }
+
+  // Debug tracking
+  last_pal_commit_frame_ = frame;
+  last_pal_commit_scanline_ = scanline;
 }
 
 void PPU::RenderScanline(int scanline, Framebuffer& fb) {
@@ -180,7 +308,7 @@ void PPU::RenderScanline(int scanline, Framebuffer& fb) {
 
   if (!display_enable) {
     // Display disabled: fill scanline with black (palette index 0)
-    const u32 black = palette_[0];
+    const u32 black = active_rgb888_[0];  // Phase 8: Use active palette
     for (int x = 0; x < kScreenWidth; ++x) {
       fb.pixels[row_offset + static_cast<size_t>(x)] = black;
     }
@@ -269,12 +397,12 @@ u16 PPU::FetchTilemapEntry(int tile_x, int tile_y) const {
 }
 
 u32 PPU::PaletteToArgb(u8 palette_index) const {
-  // Phase 7: Direct lookup into fixed palette
-  // Clamp index to palette size for safety
-  if (palette_index >= kPaletteSize) {
+  // Phase 8: Lookup in active palette (cached RGB888)
+  // Clamp index to palette entries for safety
+  if (palette_index >= kPaletteEntries) {
     palette_index = 0;
   }
-  return palette_[palette_index];
+  return active_rgb888_[palette_index];
 }
 
 DebugState PPU::GetDebugState() const {
@@ -285,6 +413,18 @@ DebugState PPU::GetDebugState() const {
   state.vblank_latch_count = vblank_latch_count_;
   state.active_regs = active_regs_;
   state.pending_regs = pending_regs_;
+
+  // Phase 8: Palette debug state
+  state.palette_debug.pal_addr = pal_addr_;
+  state.palette_debug.pal_index = pal_addr_ >> 1;
+  state.palette_debug.pal_byte_sel = pal_addr_ & 1;
+  state.palette_debug.last_write_frame = last_pal_write_frame_;
+  state.palette_debug.last_write_scanline = last_pal_write_scanline_;
+  state.palette_debug.last_write_entry = last_pal_write_entry_;
+  state.palette_debug.last_write_byte_sel = last_pal_write_byte_sel_;
+  state.palette_debug.last_commit_frame = last_pal_commit_frame_;
+  state.palette_debug.last_commit_scanline = last_pal_commit_scanline_;
+
   return state;
 }
 

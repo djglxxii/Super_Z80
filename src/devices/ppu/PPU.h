@@ -25,6 +25,19 @@ struct PpuRegs {
   u8 pattern_base = 0;   // 0x18: Pattern base selector (VRAM page index, *1024)
 };
 
+// Phase 8: Palette debug tracking
+struct PaletteDebugState {
+  u8 pal_addr = 0;                  // Current PAL_ADDR value (0-255)
+  u8 pal_index = 0;                 // Derived: pal_addr >> 1 (0-127)
+  u8 pal_byte_sel = 0;              // Derived: pal_addr & 1 (0=low, 1=high)
+  int last_write_frame = -1;        // Frame # of last palette write
+  int last_write_scanline = -1;     // Scanline # of last palette write
+  u8 last_write_entry = 0;          // Which entry (0-127) was last written
+  u8 last_write_byte_sel = 0;       // Which byte (0=low, 1=high) was last written
+  int last_commit_frame = -1;       // Frame # of last palette commit
+  int last_commit_scanline = -1;    // Scanline # of last palette commit
+};
+
 struct DebugState {
   int last_scanline = -1;
   bool vblank_flag = false;
@@ -33,6 +46,8 @@ struct DebugState {
   // Phase 7: Register visibility
   PpuRegs active_regs;
   PpuRegs pending_regs;
+  // Phase 8: Palette debug state
+  PaletteDebugState palette_debug;
 };
 
 class PPU {
@@ -40,8 +55,9 @@ class PPU {
   // Phase 7: VRAM size (48KB per spec)
   static constexpr size_t kVramSizeBytes = 49152;  // 48KB
 
-  // Phase 7: Fixed palette (16 colors for Phase 7, 9-bit RGB packed as ARGB8888)
-  static constexpr size_t kPaletteSize = 16;
+  // Phase 8: Palette RAM capacity (128 entries, 9-bit RGB)
+  static constexpr size_t kPaletteEntries = 128;
+  static constexpr size_t kPaletteApertureBytes = 256;  // 128 entries * 2 bytes
 
   void Reset();
 
@@ -68,6 +84,21 @@ class PPU {
   const PpuRegs& GetActiveRegs() const { return active_regs_; }
   const PpuRegs& GetPendingRegs() const { return pending_regs_; }
 
+  // Phase 8: Palette byte write (used by DMA engine for palette DMA)
+  // Writes to staged palette; takes byte address (0-255)
+  void PaletteWriteByte(u8 addr, u8 value);
+
+  // Phase 8: Palette commit (called at scanline start)
+  void PaletteCommitAtScanlineStart(int frame, int scanline);
+
+  // Phase 8: Debug access to palette
+  const std::array<u16, kPaletteEntries>& GetStagedPalette() const { return staged_pal_; }
+  const std::array<u16, kPaletteEntries>& GetActivePalette() const { return active_pal_; }
+  const std::array<u32, kPaletteEntries>& GetActiveRgb888() const { return active_rgb888_; }
+
+  // Phase 8: Set current frame for debug tracking
+  void SetCurrentFrame(u64 frame) { current_frame_ = frame; }
+
   DebugState GetDebugState() const;
 
  private:
@@ -79,11 +110,17 @@ class PPU {
   // Returns tile index (bits 0-9); ignores flip/priority for Phase 7
   u16 FetchTilemapEntry(int tile_x, int tile_y) const;
 
-  // Phase 7: Map palette index to ARGB8888 color
+  // Phase 8: Map palette index to ARGB8888 color using active palette
   u32 PaletteToArgb(u8 palette_index) const;
+
+  // Phase 8: Expand 9-bit packed RGB to 32-bit ARGB8888
+  static u32 ExpandPaletteEntry(u16 packed);
 
   // Phase 7: Initialize test pattern in VRAM for startup display
   void InitTestPattern();
+
+  // Phase 8: Initialize default palette entries
+  void InitDefaultPalette();
 
   int last_scanline_ = -1;
 
@@ -99,8 +136,25 @@ class PPU {
   PpuRegs active_regs_;
   PpuRegs pending_regs_;
 
-  // Phase 7: Fixed palette (ARGB8888 format)
-  std::array<u32, kPaletteSize> palette_;
+  // Phase 8: Palette RAM (128 entries, 9-bit RGB packed as uint16_t)
+  // Bit layout: bits 0-2 = R (0-7), bits 3-5 = G (0-7), bits 6-8 = B (0-7), bits 9-15 = 0
+  std::array<u16, kPaletteEntries> staged_pal_{};   // Write target
+  std::array<u16, kPaletteEntries> active_pal_{};   // Render target
+  std::array<u32, kPaletteEntries> active_rgb888_{}; // Cached expanded colors
+
+  // Phase 8: Palette I/O state
+  u8 pal_addr_ = 0;  // 8-bit byte address into 256-byte palette aperture
+
+  // Phase 8: Palette debug tracking
+  int last_pal_write_frame_ = -1;
+  int last_pal_write_scanline_ = -1;
+  u8 last_pal_write_entry_ = 0;
+  u8 last_pal_write_byte_sel_ = 0;
+  int last_pal_commit_frame_ = -1;
+  int last_pal_commit_scanline_ = -1;
+
+  // Phase 8: Current frame number (for debug tracking)
+  u64 current_frame_ = 0;
 };
 
 }  // namespace sz::ppu

@@ -19,10 +19,12 @@ void DMAEngine::Reset() {
   queued_src_ = 0;
   queued_dst_ = 0;
   queued_len_ = 0;
+  queued_dst_is_palette_ = false;  // Phase 8
 
   last_exec_frame_ = -1;
   last_exec_scanline_ = -1;
   last_trigger_was_queued_ = false;
+  last_exec_was_palette_ = false;  // Phase 8
   last_illegal_start_ = false;
 }
 
@@ -43,7 +45,8 @@ u8 DMAEngine::ReadReg(u8 port) {
     case kDmaPortCtrl:
       // BUSY bit is always 0 (DMA is instantaneous)
       // START bit reads as 0
-      return dma_ctrl_ & kDmaCtrlQueueIfNotVBlank;
+      // Phase 8: Return QUEUE and DST_IS_PALETTE bits
+      return dma_ctrl_ & (kDmaCtrlQueueIfNotVBlank | kDmaCtrlDstIsPalette);
     default:
       return 0xFF;  // Unmapped ports
   }
@@ -83,9 +86,10 @@ void DMAEngine::WriteReg(u8 port, u8 value) {
 void DMAEngine::OnScanlineBoundary(int scanline, bool vblank_flag, u64 frame) {
   // Phase 6: Process queued DMA at start of VBlank (scanline 192)
   if (scanline == kVBlankStartScanline && vblank_flag && queued_valid_) {
-    ExecuteDMA(queued_src_, queued_dst_, queued_len_, frame, scanline);
+    ExecuteDMA(queued_src_, queued_dst_, queued_len_, queued_dst_is_palette_, frame, scanline);
     last_trigger_was_queued_ = true;
     queued_valid_ = false;  // Clear queue after execution
+    queued_dst_is_palette_ = false;  // Phase 8: Clear palette flag
     return;
   }
 
@@ -101,6 +105,7 @@ void DMAEngine::OnScanlineBoundary(int scanline, bool vblank_flag, u64 frame) {
   u16 src = static_cast<u16>((dma_src_hi_ << 8) | dma_src_lo_);
   u16 dst = static_cast<u16>((dma_dst_hi_ << 8) | dma_dst_lo_);
   u16 len = static_cast<u16>((dma_len_hi_ << 8) | dma_len_lo_);
+  bool dst_is_palette = (dma_ctrl_ & kDmaCtrlDstIsPalette) != 0;  // Phase 8
 
   // Phase 6: Length rule: len == 0 => no-op
   if (len == 0) {
@@ -110,7 +115,7 @@ void DMAEngine::OnScanlineBoundary(int scanline, bool vblank_flag, u64 frame) {
   // Phase 6: DMA legality check
   if (vblank_flag) {
     // Legal: execute immediately
-    ExecuteDMA(src, dst, len, frame, scanline);
+    ExecuteDMA(src, dst, len, dst_is_palette, frame, scanline);
     last_trigger_was_queued_ = false;
     last_illegal_start_ = false;
   } else {
@@ -121,6 +126,7 @@ void DMAEngine::OnScanlineBoundary(int scanline, bool vblank_flag, u64 frame) {
       queued_src_ = src;
       queued_dst_ = dst;
       queued_len_ = len;
+      queued_dst_is_palette_ = dst_is_palette;  // Phase 8
       last_illegal_start_ = false;
     } else {
       // Ignore the request (debug-only error flag)
@@ -129,7 +135,7 @@ void DMAEngine::OnScanlineBoundary(int scanline, bool vblank_flag, u64 frame) {
   }
 }
 
-void DMAEngine::ExecuteDMA(u16 src, u16 dst, u16 len, u64 frame, int scanline) {
+void DMAEngine::ExecuteDMA(u16 src, u16 dst, u16 len, bool dst_is_palette, u64 frame, int scanline) {
   // Phase 6: Enforce VBlank-only execution (internal invariant)
   // This function should only be called when vblank_flag is true
   // (enforced by caller logic)
@@ -138,10 +144,23 @@ void DMAEngine::ExecuteDMA(u16 src, u16 dst, u16 len, u64 frame, int scanline) {
     return;  // Dependencies not wired
   }
 
-  // Phase 6: Copy data from CPU address space to VRAM
-  for (u16 i = 0; i < len; ++i) {
-    u8 byte = bus_->Read8(static_cast<u16>(src + i));
-    ppu_->VramWriteByte(static_cast<u16>(dst + i), byte);
+  if (dst_is_palette) {
+    // Phase 8: Copy data from CPU address space to Palette RAM
+    // dst is interpreted as 8-bit palette byte address (0-255)
+    u8 pal_addr = static_cast<u8>(dst & 0xFF);
+    for (u16 i = 0; i < len; ++i) {
+      u8 byte = bus_->Read8(static_cast<u16>(src + i));
+      ppu_->PaletteWriteByte(pal_addr, byte);
+      pal_addr++;  // Wraps 0xFF -> 0x00 naturally
+    }
+    last_exec_was_palette_ = true;
+  } else {
+    // Phase 6: Copy data from CPU address space to VRAM
+    for (u16 i = 0; i < len; ++i) {
+      u8 byte = bus_->Read8(static_cast<u16>(src + i));
+      ppu_->VramWriteByte(static_cast<u16>(dst + i), byte);
+    }
+    last_exec_was_palette_ = false;
   }
 
   // Track execution
@@ -163,17 +182,20 @@ DebugState DMAEngine::GetDebugState() const {
   state.len = static_cast<u16>((dma_len_hi_ << 8) | dma_len_lo_);
   state.ctrl = dma_ctrl_;
   state.queue_enabled = (dma_ctrl_ & kDmaCtrlQueueIfNotVBlank) != 0;
+  state.dst_is_palette = (dma_ctrl_ & kDmaCtrlDstIsPalette) != 0;  // Phase 8
 
   // Queued DMA state
   state.queued_valid = queued_valid_;
   state.queued_src = queued_src_;
   state.queued_dst = queued_dst_;
   state.queued_len = queued_len_;
+  state.queued_dst_is_palette = queued_dst_is_palette_;  // Phase 8
 
   // Last execution tracking
   state.last_exec_frame = last_exec_frame_;
   state.last_exec_scanline = last_exec_scanline_;
   state.last_trigger_was_queued = last_trigger_was_queued_;
+  state.last_exec_was_palette = last_exec_was_palette_;  // Phase 8
 
   // Error tracking
   state.last_illegal_start = last_illegal_start_;
