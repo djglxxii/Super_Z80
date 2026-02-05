@@ -1,4 +1,5 @@
 #include "devices/bus/Bus.h"
+#include "devices/dma/DMAEngine.h"
 #include "devices/irq/IRQController.h"
 #include "devices/ppu/PPU.h"
 
@@ -42,6 +43,13 @@ u8 Bus::In8(u8 port) {
       return 0xFF;
 
     default:
+      // Phase 6: DMA I/O ports (0x30-0x36)
+      if (port >= 0x30 && port <= 0x36) {
+        if (dma_) {
+          return dma_->ReadReg(port);
+        }
+        return 0xFF;
+      }
       // All other ports return 0xFF (stubbed/unmapped)
       return 0xFF;
   }
@@ -65,6 +73,13 @@ void Bus::Out8(u8 port, u8 value) {
       return;
 
     default:
+      // Phase 6: DMA I/O ports (0x30-0x36)
+      if (port >= 0x30 && port <= 0x36) {
+        if (dma_) {
+          dma_->WriteReg(port, value);
+        }
+        return;
+      }
       // All other ports are ignored (writes have no effect)
       return;
   }

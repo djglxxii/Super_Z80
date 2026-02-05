@@ -11,6 +11,10 @@ namespace sz::ppu {
 class PPU;
 }
 
+namespace sz::dma {
+class DMAEngine;
+}
+
 namespace sz::bus {
 
 struct DebugState {
@@ -32,9 +36,13 @@ class Bus {
   // Phase 5: Wire PPU for VDP_STATUS port access
   void SetPPU(sz::ppu::PPU* ppu) { ppu_ = ppu; }
 
+  // Phase 6: Wire DMAEngine for DMA I/O port access
+  void SetDMAEngine(sz::dma::DMAEngine* dma) { dma_ = dma; }
+
  private:
   sz::irq::IRQController* irq_ = nullptr;
   sz::ppu::PPU* ppu_ = nullptr;
+  sz::dma::DMAEngine* dma_ = nullptr;
 };
 
 }  // namespace sz::bus

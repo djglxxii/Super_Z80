@@ -19,6 +19,14 @@ bool SuperZ80Console::PowerOn() {
   // Phase 5: Wire PPU to Bus for VDP_STATUS port access
   bus_.SetPPU(&ppu_);
 
+  // Phase 6: Wire DMAEngine dependencies
+  dma_.SetBus(&bus_);
+  dma_.SetPPU(&ppu_);
+  dma_.SetIRQController(&irq_);
+
+  // Phase 6: Wire DMAEngine to Bus for DMA I/O port access
+  bus_.SetDMAEngine(&dma_);
+
   return true;
 }
 
@@ -78,8 +86,11 @@ void SuperZ80Console::OnVisibleScanline(u16 scanline) {
 }
 
 void SuperZ80Console::TickDMA() {
-  // Phase 3: DMA stub (no-op)
-  dma_.Tick();
+  // Phase 6: DMA processes queued requests during VBlank
+  int scanline = static_cast<int>(scheduler_.GetCurrentScanline());
+  bool vblank = ppu_.GetVBlankFlag();
+  u64 frame = scheduler_.GetFrameCounter();
+  dma_.OnScanlineBoundary(scanline, vblank, frame);
 }
 
 void SuperZ80Console::TickAPU(u32 cycles) {
