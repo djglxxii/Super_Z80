@@ -5,7 +5,7 @@
 
 namespace sz::app {
 
-void VideoPresenter::Present(SDLHost& host, const sz::ppu::Framebuffer& framebuffer) {
+void VideoPresenter::Present(SDLHost& host, const sz::ppu::Framebuffer& framebuffer, bool do_present) {
   SDL_Renderer* renderer = host.GetRenderer();
   SDL_Texture* texture = host.GetTexture();
   if (!renderer || !texture) {
@@ -22,7 +22,11 @@ void VideoPresenter::Present(SDLHost& host, const sz::ppu::Framebuffer& framebuf
 
   SDL_Rect dest{0, 0, framebuffer.width * host.GetScale(), framebuffer.height * host.GetScale()};
   SDL_RenderCopy(renderer, texture, nullptr, &dest);
-  SDL_RenderPresent(renderer);
+
+  // Only present if requested (allows ImGui to draw on top before presenting)
+  if (do_present) {
+    SDL_RenderPresent(renderer);
+  }
 }
 
 }  // namespace sz::app

@@ -8,7 +8,8 @@ namespace sz::app {
 
 class VideoPresenter {
  public:
-  void Present(SDLHost& host, const sz::ppu::Framebuffer& framebuffer);
+  // Render framebuffer to screen. If do_present is false, caller must call SDL_RenderPresent.
+  void Present(SDLHost& host, const sz::ppu::Framebuffer& framebuffer, bool do_present = true);
 };
 
 }  // namespace sz::app

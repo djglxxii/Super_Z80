@@ -56,16 +56,23 @@ int App::Run() {
     console_.SetHostButtons(input_.ReadButtons());
     console_.StepFrame();
 
-    // Phase 7: PPU now renders directly to framebuffer, just present it
+    // Phase 7: PPU now renders directly to framebuffer
     const auto& framebuffer = console_.GetFramebuffer();
-    presenter_.Present(sdl_, framebuffer);
 
 #if defined(SUPERZ80_ENABLE_IMGUI)
     if (config_.enable_imgui) {
+      // Don't present yet - let ImGui draw on top first
+      presenter_.Present(sdl_, framebuffer, false);
       debug_ui_.BeginFrame();
       debug_ui_.Draw(console_);
       debug_ui_.EndFrame();
+      // Now present everything together
+      SDL_RenderPresent(sdl_.GetRenderer());
+    } else {
+      presenter_.Present(sdl_, framebuffer, true);
     }
+#else
+    presenter_.Present(sdl_, framebuffer, true);
 #endif
   }
 
