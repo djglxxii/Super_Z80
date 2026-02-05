@@ -59,9 +59,6 @@ class SuperZ80Console {
   sz::cpu::Z80CpuStub cpu_{};
 
   sz::ppu::Framebuffer framebuffer_{};
-
-  // Phase 4: synthetic IRQ trigger state
-  bool synthetic_fired_this_frame_ = false;
 };
 
 }  // namespace sz::console

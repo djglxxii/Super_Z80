@@ -16,6 +16,9 @@ bool SuperZ80Console::PowerOn() {
   // Wire IRQController to Bus for I/O port access
   bus_.SetIRQController(&irq_);
 
+  // Phase 5: Wire PPU to Bus for VDP_STATUS port access
+  bus_.SetPPU(&ppu_);
+
   return true;
 }
 
@@ -29,9 +32,6 @@ void SuperZ80Console::Reset() {
   dma_.Reset();
   input_.Reset();
   cpu_.Reset();
-
-  // Track frame state for synthetic IRQ trigger
-  synthetic_fired_this_frame_ = false;
 }
 
 void SuperZ80Console::StepFrame() {
@@ -42,20 +42,14 @@ void SuperZ80Console::StepFrame() {
 
 // Scheduler hook implementations (called by Scheduler::StepOneScanline)
 void SuperZ80Console::OnScanlineStart(u16 scanline) {
-  // Phase 4: Synthetic IRQ trigger + PreCpuUpdate
-  // Trigger rule: once per frame, at start of scanline 10, raise TIMER pending
-  if (scanline == 10 && !synthetic_fired_this_frame_) {
-    irq_.Raise(static_cast<u8>(sz::irq::IrqBit::Timer));
-    irq_.IncrementSyntheticFireCount();
-    synthetic_fired_this_frame_ = true;
+  // Phase 5: Call PPU's OnScanlineStart to handle VBlank flag transitions
+  ppu_.OnScanlineStart(scanline);
 
-    SZ_LOG_INFO("Phase 4: Synthetic TIMER IRQ raised at scanline 10, frame %llu",
+  // Phase 5: Replace synthetic IRQ with real VBlank IRQ at scanline 192
+  if (scanline == kVBlankStartScanline) {
+    irq_.Raise(static_cast<u8>(sz::irq::IrqBit::VBlank));
+    SZ_LOG_INFO("Phase 5: VBlank IRQ raised at scanline 192, frame %llu",
                 static_cast<unsigned long long>(scheduler_.GetFrameCounter()));
-  }
-
-  // Reset synthetic_fired_this_frame at frame boundary (scanline 0)
-  if (scanline == 0) {
-    synthetic_fired_this_frame_ = false;
   }
 
   // Recompute /INT before CPU runs this scanline

@@ -42,7 +42,6 @@ class Scheduler {
   // Accessors
   u16 GetCurrentScanline() const { return current_scanline_; }
   u64 GetFrameCounter() const { return frame_counter_; }
-  bool IsVBlank() const { return vblank_flag_; }
   u64 GetTotalCpuTStatesExecuted() const { return total_cpu_tstates_executed_; }
 
   DebugState GetDebugState() const;
@@ -60,7 +59,6 @@ class Scheduler {
   u16 current_scanline_ = 0;        // 0-261
   u64 frame_counter_ = 0;
   u64 total_cpu_tstates_executed_ = 0;
-  bool vblank_flag_ = false;
   double cpu_cycle_accumulator_ = 0.0;  // fractional remainder
   u32 cycles_this_scanline_ = 0;
 

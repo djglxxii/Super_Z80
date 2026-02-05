@@ -7,6 +7,10 @@ namespace sz::irq {
 class IRQController;
 }
 
+namespace sz::ppu {
+class PPU;
+}
+
 namespace sz::bus {
 
 struct DebugState {
@@ -25,8 +29,12 @@ class Bus {
   // Wire IRQController for I/O port access
   void SetIRQController(sz::irq::IRQController* irq) { irq_ = irq; }
 
+  // Phase 5: Wire PPU for VDP_STATUS port access
+  void SetPPU(sz::ppu::PPU* ppu) { ppu_ = ppu; }
+
  private:
   sz::irq::IRQController* irq_ = nullptr;
+  sz::ppu::PPU* ppu_ = nullptr;
 };
 
 }  // namespace sz::bus

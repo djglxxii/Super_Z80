@@ -12,7 +12,6 @@ void Scheduler::Reset() {
   current_scanline_ = 0;
   frame_counter_ = 0;
   total_cpu_tstates_executed_ = 0;
-  vblank_flag_ = false;
   cpu_cycle_accumulator_ = 0.0;
   cycles_this_scanline_ = 0;
   ring_buffer_head_ = 0;
@@ -38,7 +37,7 @@ void Scheduler::RecordScanlineInRingBuffer(double acc_before, double acc_after, 
   ScanlineRecord& rec = ring_buffer_[ring_buffer_head_];
   rec.frame_counter_at_time = frame_counter_;
   rec.scanline = current_scanline_;
-  rec.vblank_flag = vblank_flag_;
+  rec.vblank_flag = false;  // Phase 5: VBlank moved to PPU; deprecated here
   rec.cycles_this_scanline = cycles;
   rec.accumulator_before = acc_before;
   rec.accumulator_after = acc_after;
@@ -51,37 +50,31 @@ void Scheduler::StepOneScanline(sz::console::SuperZ80Console& console) {
   // 1. Scheduler computes cycles_this_line using accumulator rule
   cycles_this_scanline_ = ComputeCyclesThisLine();
 
-  // 2. Phase 4: Scanline start hook (synthetic IRQ trigger + PreCpuUpdate)
+  // 2. Phase 5: Scanline start hook (VBlank timing + IRQ trigger + PreCpuUpdate)
   console.OnScanlineStart(current_scanline_);
 
   // 3. CPU executes for exactly cycles_this_line T-states
   console.ExecuteCpu(cycles_this_scanline_);
 
-  // 4. IRQController PostCpuUpdate (Phase 4: ensure ACK drops /INT immediately)
+  // 4. IRQController PostCpuUpdate (ensure ACK drops /INT immediately)
   console.TickIRQ();
 
-  // 5. If visible scanline (0-191): PPU hook (stub in Phase 3)
+  // 5. If visible scanline (0-191): PPU hook (stub rendering)
   if (current_scanline_ <= 191) {
     console.OnVisibleScanline(current_scanline_);
   }
 
-  // 6. If scanline == 192: enter VBlank (no IRQ in Phase 4, will be Phase 5)
-  if (current_scanline_ == kVBlankStartScanline) {
-    vblank_flag_ = true;
-  }
-
-  // 7. DMAEngine tick stub (no-op in Phase 4)
+  // 6. DMAEngine tick stub (no-op until Phase 6)
   console.TickDMA();
 
-  // 8. APU tick stub (no-op in Phase 4)
+  // 7. APU tick stub (no-op until Phase 12)
   console.TickAPU(cycles_this_scanline_);
 
-  // 9. Advance scanline
+  // 8. Advance scanline
   current_scanline_++;
   if (current_scanline_ >= kTotalScanlines) {
     current_scanline_ = 0;
     frame_counter_++;
-    vblank_flag_ = false;  // clear vblank at scanline 0
   }
 
   // Cycle accounting invariant check (debug builds)
@@ -109,7 +102,7 @@ DebugState Scheduler::GetDebugState() const {
   DebugState state;
   state.current_scanline = current_scanline_;
   state.frame_counter = frame_counter_;
-  state.vblank_flag = vblank_flag_;
+  state.vblank_flag = false;  // Phase 5: VBlank moved to PPU; deprecated here
   state.cycles_this_scanline = cycles_this_scanline_;
   state.cpu_cycle_accumulator = cpu_cycle_accumulator_;
   state.total_cpu_tstates_executed = total_cpu_tstates_executed_;

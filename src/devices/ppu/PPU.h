@@ -15,16 +15,31 @@ struct Framebuffer {
 
 struct DebugState {
   int last_scanline = -1;
+  bool vblank_flag = false;
+  u16 last_vblank_latch_scanline = 0xFFFF;
+  u64 vblank_latch_count = 0;
 };
 
 class PPU {
  public:
   void Reset();
   void RenderScanline(int scanline, Framebuffer& fb);
+
+  // Phase 5: VBlank timing hooks (called by Console from Scheduler boundary)
+  void OnScanlineStart(u16 scanline);
+
+  // Phase 5: Read VBlank flag for VDP_STATUS port
+  bool GetVBlankFlag() const { return vblank_flag_; }
+
   DebugState GetDebugState() const;
 
  private:
   int last_scanline_ = -1;
+
+  // Phase 5: VBlank state (no rendering changes)
+  bool vblank_flag_ = false;
+  u16 last_vblank_latch_scanline_ = 0xFFFF;
+  u64 vblank_latch_count_ = 0;
 };
 
 }  // namespace sz::ppu

@@ -1,5 +1,6 @@
 #include "devices/bus/Bus.h"
 #include "devices/irq/IRQController.h"
+#include "devices/ppu/PPU.h"
 
 namespace sz::bus {
 
@@ -14,8 +15,20 @@ void Bus::Write8(u16 /*addr*/, u8 /*value*/) {
 }
 
 u8 Bus::In8(u8 port) {
-  // Decode I/O ports for Phase 4
+  // Decode I/O ports for Phase 5
   switch (port) {
+    case 0x10:  // VDP_STATUS (R) - Phase 5
+      if (ppu_) {
+        // Bit 0: VBLANK flag (live view of vblank_flag)
+        // Other bits: 0 for now (no sprites, no scanline compare, etc.)
+        u8 status = 0x00;
+        if (ppu_->GetVBlankFlag()) {
+          status |= 0x01;  // VBlank bit
+        }
+        return status;
+      }
+      return 0xFF;
+
     case 0x80:  // IRQ_STATUS (R)
       if (irq_) {
         return irq_->ReadStatus();

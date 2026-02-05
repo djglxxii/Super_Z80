@@ -7,7 +7,7 @@ namespace sz::debugui {
 void PanelIRQ::Draw(const sz::console::SuperZ80Console& console) {
   auto state = console.GetIRQDebugState();
 
-  ImGui::Text("Phase 4: IRQ Infrastructure");
+  ImGui::Text("Phase 5: IRQ Infrastructure (VBlank)");
   ImGui::Separator();
 
   ImGui::Text("Scanline: %u", state.scanline);
@@ -31,8 +31,8 @@ void PanelIRQ::Draw(const sz::console::SuperZ80Console& console) {
 
   ImGui::Separator();
   ImGui::Text("Counters:");
-  ImGui::BulletText("Synthetic Fire Count: %llu", static_cast<unsigned long long>(state.synthetic_fire_count));
-  ImGui::BulletText("ISR Entry Count:      %llu", static_cast<unsigned long long>(state.isr_entry_count));
+  ImGui::BulletText("ISR Entry Count: %llu", static_cast<unsigned long long>(state.isr_entry_count));
+  ImGui::TextDisabled("(Synthetic Fire Count removed in Phase 5)");
 }
 
 }  // namespace sz::debugui
