@@ -10,10 +10,18 @@ void IRQController::Reset() {
   int_line_ = false;
   isr_entry_count_ = 0;
   synthetic_fire_count_ = 0;
+  current_scanline_ = 0;
+  last_vblank_scanline_ = 0;
 }
 
 void IRQController::Raise(u8 pending_mask) {
   pending_ |= pending_mask;
+
+  // Phase 9: Track when VBlank IRQ is raised
+  if (pending_mask & static_cast<u8>(IrqBit::VBlank)) {
+    last_vblank_scanline_ = current_scanline_;
+  }
+
   // Note: /INT is recomputed in PreCpuUpdate/PostCpuUpdate, not here
 }
 
@@ -70,9 +78,10 @@ DebugState IRQController::GetDebug(u16 current_scanline) const {
   state.scanline = current_scanline;
   state.pending = pending_;
   state.enable = enable_;
-  state.int_line_asserted = int_line_;
+  state.int_line = int_line_;
   state.isr_entry_count = isr_entry_count_;
   state.synthetic_fire_count = synthetic_fire_count_;
+  state.last_vblank_scanline = last_vblank_scanline_;
   return state;
 }
 

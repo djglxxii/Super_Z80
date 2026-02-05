@@ -1,0 +1,1 @@
+/usr/bin/c++ -g -Wl,--dependency-file=CMakeFiles/irq_phase4_tests.dir/link.d CMakeFiles/irq_phase4_tests.dir/src/tests/irq_phase4_tests.cpp.o -o irq_phase4_tests  libsuperz80_core.a

@@ -19,9 +19,10 @@ struct DebugState {
   u16 scanline = 0;                  // provided by Scheduler for display
   u8 pending = 0;                    // latched
   u8 enable = 0;                     // mask
-  bool int_line_asserted = false;    // derived
+  bool int_line = false;             // derived /INT line state
   u64 isr_entry_count = 0;           // maintained by test harness observation
   u64 synthetic_fire_count = 0;      // maintained by scheduler trigger
+  u16 last_vblank_scanline = 0;      // Phase 9: scanline when VBlank IRQ was last raised
 };
 
 class IRQController {
@@ -55,12 +56,18 @@ class IRQController {
   void IncrementIsrEntryCount() { isr_entry_count_++; }
   void IncrementSyntheticFireCount() { synthetic_fire_count_++; }
 
+ public:
+  // Phase 9: Set current scanline for VBlank tracking
+  void SetCurrentScanline(u16 scanline) { current_scanline_ = scanline; }
+
  private:
   u8 pending_ = 0;
   u8 enable_  = 0;
   bool int_line_ = false;
   u64 isr_entry_count_ = 0;
   u64 synthetic_fire_count_ = 0;
+  u16 current_scanline_ = 0;       // Phase 9: current scanline
+  u16 last_vblank_scanline_ = 0;   // Phase 9: scanline when VBlank IRQ was raised
 
   void RecomputeIntLine();  // int_line_ = ((pending_ & enable_) != 0)
 };

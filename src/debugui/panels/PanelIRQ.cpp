@@ -11,7 +11,7 @@ void PanelIRQ::Draw(const sz::console::SuperZ80Console& console) {
   ImGui::Separator();
 
   ImGui::Text("Scanline: %u", state.scanline);
-  ImGui::Text("/INT Line: %s", state.int_line_asserted ? "ASSERTED" : "deasserted");
+  ImGui::Text("/INT Line: %s", state.int_line ? "ASSERTED" : "deasserted");
 
   ImGui::Separator();
   ImGui::Text("Pending Bits: 0x%02X", state.pending);

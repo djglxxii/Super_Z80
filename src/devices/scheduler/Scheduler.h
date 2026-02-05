@@ -61,6 +61,7 @@ class Scheduler {
   u64 total_cpu_tstates_executed_ = 0;
   double cpu_cycle_accumulator_ = 0.0;  // fractional remainder
   u32 cycles_this_scanline_ = 0;
+  s32 cpu_cycle_debt_ = 0;  // Phase 9: cycles borrowed from next scanline
 
   // Ring buffer for debug
   std::array<ScanlineRecord, kRingBufferSize> ring_buffer_{};

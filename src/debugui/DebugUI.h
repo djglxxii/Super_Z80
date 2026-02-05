@@ -4,6 +4,7 @@
 #include <SDL.h>
 
 #include "console/SuperZ80Console.h"
+#include "debugui/panels/PanelDiagnostics.h"
 
 namespace sz::debugui {
 
@@ -18,6 +19,9 @@ class DebugUI {
 
  private:
   bool initialized_ = false;
+
+  // Phase 9: Diagnostics panel needs persistent state
+  PanelDiagnostics diag_panel_;
 };
 
 }  // namespace sz::debugui

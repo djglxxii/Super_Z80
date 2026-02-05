@@ -24,8 +24,10 @@ int main(int argc, char** argv) {
       config.scale = ParseScale(argv[++i]);
     } else if (arg == "--no-imgui") {
       config.enable_imgui = false;
+    } else if (arg == "--rom" && i + 1 < argc) {
+      config.rom_path = argv[++i];
     } else if (arg == "--help") {
-      SZ_LOG_INFO("Usage: superz80_app [--scale N] [--no-imgui]");
+      SZ_LOG_INFO("Usage: superz80_app [--scale N] [--no-imgui] [--rom path/to/rom.bin]");
       return 0;
     }
   }

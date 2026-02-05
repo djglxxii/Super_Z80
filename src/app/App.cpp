@@ -29,6 +29,16 @@ int App::Run() {
     SDL_Quit();
     return 1;
   }
+
+  // Phase 9: Load ROM if specified
+  if (config_.rom_path != nullptr) {
+    if (!console_.LoadRom(config_.rom_path)) {
+      SZ_LOG_ERROR("Failed to load ROM: %s", config_.rom_path);
+      SDL_Quit();
+      return 1;
+    }
+  }
+
   console_.Reset();
 
 #if defined(SUPERZ80_ENABLE_IMGUI)

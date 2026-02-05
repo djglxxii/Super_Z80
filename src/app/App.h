@@ -16,6 +16,7 @@ namespace sz::app {
 struct AppConfig {
   int scale = 3;
   bool enable_imgui = true;
+  const char* rom_path = nullptr;  // Phase 9: ROM to load
 };
 
 class App {

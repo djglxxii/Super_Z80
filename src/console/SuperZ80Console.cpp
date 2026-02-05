@@ -6,6 +6,10 @@
 
 namespace sz::console {
 
+SuperZ80Console::SuperZ80Console() = default;
+
+SuperZ80Console::~SuperZ80Console() = default;
+
 bool SuperZ80Console::PowerOn() {
   framebuffer_.width = kScreenWidth;
   framebuffer_.height = kScreenHeight;
@@ -27,6 +31,9 @@ bool SuperZ80Console::PowerOn() {
   // Phase 6: Wire DMAEngine to Bus for DMA I/O port access
   bus_.SetDMAEngine(&dma_);
 
+  // Phase 9: Create real Z80 CPU (must be after bus_ is set up)
+  cpu_ = std::make_unique<sz::cpu::Z80Cpu>(bus_);
+
   return true;
 }
 
@@ -39,7 +46,21 @@ void SuperZ80Console::Reset() {
   apu_.Reset();
   dma_.Reset();
   input_.Reset();
-  cpu_.Reset();
+  if (cpu_) {
+    cpu_->Reset();
+  }
+}
+
+bool SuperZ80Console::LoadRom(const char* path) {
+  if (!bus_.LoadRomFromFile(path)) {
+    return false;
+  }
+  SZ_LOG_INFO("SuperZ80Console: ROM loaded from '%s'", path);
+  return true;
+}
+
+bool SuperZ80Console::IsRomLoaded() const {
+  return bus_.IsRomLoaded();
 }
 
 void SuperZ80Console::StepFrame() {
@@ -56,23 +77,28 @@ void SuperZ80Console::OnScanlineStart(u16 scanline) {
   // Phase 7: Call PPU's BeginScanline to latch registers and handle VBlank flag
   ppu_.BeginScanline(static_cast<int>(scanline));
 
+  // Phase 9: Update IRQController's current scanline for VBlank tracking
+  irq_.SetCurrentScanline(scanline);
+
   // Phase 5: Replace synthetic IRQ with real VBlank IRQ at scanline 192
   if (scanline == kVBlankStartScanline) {
     irq_.Raise(static_cast<u8>(sz::irq::IrqBit::VBlank));
-    // SZ_LOG_INFO("Phase 5: VBlank IRQ raised at scanline 192, frame %llu",
-    //             static_cast<unsigned long long>(scheduler_.GetFrameCounter()));
   }
 
   // Recompute /INT before CPU runs this scanline
   irq_.PreCpuUpdate();
 
   // Drive CPU's /INT input (level-sensitive)
-  cpu_.SetIntLine(irq_.IntLineAsserted());
+  if (cpu_) {
+    cpu_->SetIntLine(irq_.IntLineAsserted());
+  }
 }
 
 void SuperZ80Console::ExecuteCpu(u32 tstates) {
-  u32 executed = cpu_.Step(tstates);
-  scheduler_.RecordCpuTStatesExecuted(executed);
+  if (cpu_) {
+    u32 executed = cpu_->Step(tstates);
+    scheduler_.RecordCpuTStatesExecuted(executed);
+  }
 }
 
 void SuperZ80Console::TickIRQ() {
@@ -80,7 +106,9 @@ void SuperZ80Console::TickIRQ() {
   irq_.PostCpuUpdate();
 
   // Update CPU's /INT input after post-CPU update
-  cpu_.SetIntLine(irq_.IntLineAsserted());
+  if (cpu_) {
+    cpu_->SetIntLine(irq_.IntLineAsserted());
+  }
 }
 
 void SuperZ80Console::OnVisibleScanline(u16 scanline) {
@@ -154,7 +182,10 @@ sz::input::DebugState SuperZ80Console::GetInputDebugState() const {
 }
 
 sz::cpu::DebugState SuperZ80Console::GetCpuDebugState() const {
-  return cpu_.GetDebugState();
+  if (cpu_) {
+    return cpu_->GetDebugState();
+  }
+  return {};
 }
 
 std::vector<u8> SuperZ80Console::GetPPUVramWindow(u16 start, size_t count) const {

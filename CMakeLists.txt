@@ -33,6 +33,7 @@ set(SUPERZ80_CORE_SOURCES
   src/emulator/cpu/Z80ExCpuPhase2.cpp
   src/emulator/io/IODevice.cpp
   src/cpu/Z80CpuStub.cpp
+  src/cpu/Z80Cpu.cpp
   src/devices/apu/APU.cpp
   src/devices/bus/Bus.cpp
   src/devices/cart/Cartridge.cpp
@@ -97,6 +98,7 @@ if (SUPERZ80_ENABLE_IMGUI)
     src/debugui/panels/PanelInput.cpp
     src/debugui/panels/PanelPPU.cpp
     src/debugui/panels/PanelScheduler.cpp
+    src/debugui/panels/PanelDiagnostics.cpp
   )
 endif()
 

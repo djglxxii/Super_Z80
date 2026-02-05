@@ -1,0 +1,8 @@
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/superz80_core.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/imgui.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/superz80_app.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/cpu_phase1_determinism.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/bus_phase2_tests.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/irq_phase4_tests.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/edit_cache.dir
+/home/djglxxii/src/Super_Z80/build/CMakeFiles/rebuild_cache.dir

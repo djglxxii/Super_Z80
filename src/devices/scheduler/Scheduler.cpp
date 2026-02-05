@@ -14,6 +14,7 @@ void Scheduler::Reset() {
   total_cpu_tstates_executed_ = 0;
   cpu_cycle_accumulator_ = 0.0;
   cycles_this_scanline_ = 0;
+  cpu_cycle_debt_ = 0;
   ring_buffer_head_ = 0;
   ring_buffer_ = {};
 }
@@ -28,6 +29,17 @@ u32 Scheduler::ComputeCyclesThisLine() {
   cpu_cycle_accumulator_ += kCpuCyclesPerLine;
   u32 cycles = static_cast<u32>(std::floor(cpu_cycle_accumulator_));
   cpu_cycle_accumulator_ -= static_cast<double>(cycles);
+
+  // Phase 9: Account for cycle debt from previous scanline
+  // (CPU may have executed more than budgeted due to instruction boundaries)
+  if (cpu_cycle_debt_ > 0 && cycles > static_cast<u32>(cpu_cycle_debt_)) {
+    cycles -= static_cast<u32>(cpu_cycle_debt_);
+    cpu_cycle_debt_ = 0;
+  } else if (cpu_cycle_debt_ > 0) {
+    // Debt exceeds this scanline's budget - carry over
+    cpu_cycle_debt_ -= static_cast<s32>(cycles);
+    cycles = 0;
+  }
 
   RecordScanlineInRingBuffer(acc_before, cpu_cycle_accumulator_, cycles);
   return cycles;
@@ -77,14 +89,19 @@ void Scheduler::StepOneScanline(sz::console::SuperZ80Console& console) {
     frame_counter_++;
   }
 
-  // Cycle accounting invariant check (debug builds)
+  // Phase 9: Cycle accounting invariant check (debug builds)
+  // Note: With real CPU execution, we may accumulate cycle debt due to
+  // instruction boundaries. The invariant is relaxed to account for this.
   #ifndef NDEBUG
   u64 lines_executed_total = frame_counter_ * kTotalScanlines + current_scanline_;
   double expected_cycles = static_cast<double>(lines_executed_total) * kCpuCyclesPerLine;
-  double actual_cycles = static_cast<double>(total_cpu_tstates_executed_) + cpu_cycle_accumulator_;
+  // Adjust actual cycles by subtracting pending debt (cycles borrowed from future)
+  double actual_cycles = static_cast<double>(total_cpu_tstates_executed_) + cpu_cycle_accumulator_
+                         - static_cast<double>(cpu_cycle_debt_);
   double error = std::abs(expected_cycles - actual_cycles);
-  double epsilon = 1e-6 * static_cast<double>(lines_executed_total);
-  SZ_ASSERT(error < epsilon || epsilon < 1e-9);  // allow for initial scanlines
+  // Allow tolerance for fractional cycles plus instruction overshoot (max ~23 cycles per instruction)
+  double epsilon = 1e-6 * static_cast<double>(lines_executed_total) + 30.0;
+  SZ_ASSERT(error < epsilon || lines_executed_total < 10);  // allow for initial scanlines
   #endif
 }
 
@@ -96,6 +113,11 @@ void Scheduler::StepOneFrame(sz::console::SuperZ80Console& console) {
 
 void Scheduler::RecordCpuTStatesExecuted(u32 tstates) {
   total_cpu_tstates_executed_ += tstates;
+
+  // Phase 9: Track cycle debt (if CPU executed more than budgeted)
+  if (tstates > cycles_this_scanline_) {
+    cpu_cycle_debt_ += static_cast<s32>(tstates - cycles_this_scanline_);
+  }
 }
 
 DebugState Scheduler::GetDebugState() const {

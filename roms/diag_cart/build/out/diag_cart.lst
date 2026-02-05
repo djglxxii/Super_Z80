@@ -1,0 +1,1438 @@
+# file opened: diag_cart.asm
+  1   0000              ; ==================================================================
+  2   0000              ; Super_Z80 Diagnostic Cartridge ROM
+  3   0000              ; diag_cart.asm - Main ROM source
+  4   0000              ;
+  5   0000              ; Entry point: 0x0000
+  6   0000              ; ISR vector:  0x0038 (IM 1)
+  7   0000              ; ROM size:    <= 32KB
+  8   0000              ; ==================================================================
+  9   0000
+ 10   0000                  device  NOSLOT64K       ; sjasmplus: 64K address space, no slot system
+ 11   0000                  org     0x0000          ; Entry point at reset vector
+ 12   0000
+ 13   0000                  include "hw.inc"        ; Hardware constants
+# file opened: hw.inc
+  1+  0000              ; Super_Z80 Diagnostic Cartridge - Hardware Constants
+  2+  0000              ; hw.inc - Port constants, RAM addresses, page sizes
+  3+  0000
+  4+  0000              ; ==================================================================
+  5+  0000              ; VIDEO CONTROL PORTS (0x10-0x1F)
+  6+  0000              ; ==================================================================
+  7+  0000              VDP_STATUS      equ     0x10    ; VBlank flag (bit 0 = 1 during scanlines 192-261)
+  8+  0000              VDP_CTRL        equ     0x11    ; Display control register
+  9+  0000              SCROLL_X        equ     0x12    ; Plane A horizontal scroll
+ 10+  0000              SCROLL_Y        equ     0x13    ; Plane A vertical scroll
+ 11+  0000              PLANE_A_BASE    equ     0x16    ; Plane A tilemap base (page index)
+ 12+  0000              PATTERN_BASE    equ     0x18    ; Tile pattern base (page index)
+ 13+  0000              PAL_ADDR        equ     0x1E    ; Palette address (byte 0-255)
+ 14+  0000              PAL_DATA        equ     0x1F    ; Palette data (auto-increment)
+ 15+  0000
+ 16+  0000              ; VDP_CTRL bit definitions
+ 17+  0000              VDP_DISPLAY_EN  equ     0x01    ; Bit 0: Display enable
+ 18+  0000              VDP_PLANE_A_EN  equ     0x02    ; Bit 1: Plane A enable
+ 19+  0000              VDP_PLANE_B_EN  equ     0x04    ; Bit 2: Plane B enable (must be off)
+ 20+  0000              VDP_SPRITES_EN  equ     0x08    ; Bit 3: Sprites enable (must be off)
+ 21+  0000
+ 22+  0000              ; ==================================================================
+ 23+  0000              ; DMA PORTS (0x30-0x36)
+ 24+  0000              ; ==================================================================
+ 25+  0000              DMA_SRC_LO      equ     0x30    ; Source address low byte
+ 26+  0000              DMA_SRC_HI      equ     0x31    ; Source address high byte
+ 27+  0000              DMA_DST_LO      equ     0x32    ; Destination address low byte
+ 28+  0000              DMA_DST_HI      equ     0x33    ; Destination address high byte
+ 29+  0000              DMA_LEN_LO      equ     0x34    ; Transfer length low byte
+ 30+  0000              DMA_LEN_HI      equ     0x35    ; Transfer length high byte
+ 31+  0000              DMA_CTRL        equ     0x36    ; DMA control register
+ 32+  0000
+ 33+  0000              ; DMA_CTRL bit definitions
+ 34+  0000              DMA_START       equ     0x01    ; Bit 0: Start DMA
+ 35+  0000              DMA_QUEUE       equ     0x04    ; Bit 2: Queue if not in VBlank
+ 36+  0000              DMA_PAL_DST     equ     0x08    ; Bit 3: Destination is Palette RAM
+ 37+  0000
+ 38+  0000              ; ==================================================================
+ 39+  0000              ; IRQ PORTS (0x80-0x82)
+ 40+  0000              ; ==================================================================
+ 41+  0000              IRQ_STATUS      equ     0x80    ; Read: pending IRQ bits
+ 42+  0000              IRQ_ENABLE      equ     0x81    ; Read/Write: IRQ enable mask
+ 43+  0000              IRQ_ACK         equ     0x82    ; Write: acknowledge IRQs (write-1-to-clear)
+ 44+  0000
+ 45+  0000              ; IRQ bit definitions
+ 46+  0000              IRQ_VBLANK      equ     0x01    ; Bit 0: VBlank IRQ
+ 47+  0000
+ 48+  0000              ; ==================================================================
+ 49+  0000              ; MEMORY MAP
+ 50+  0000              ; ==================================================================
+ 51+  0000              ; ROM:  0x0000 - 0x7FFF (32KB max, bank 0 only)
+ 52+  0000              ; VRAM: (internal to PPU, accessed via DMA)
+ 53+  0000              ; WRAM: 0xC000 - 0xFFFF (16KB)
+ 54+  0000
+ 55+  0000              ; ==================================================================
+ 56+  0000              ; RAM VARIABLES (fixed addresses per spec)
+ 57+  0000              ; ==================================================================
+ 58+  0000              FRAME_COUNTER   equ     0xC000  ; 16-bit frame counter
+ 59+  0000              VBLANK_COUNT    equ     0xC002  ; 16-bit VBlank ISR counter
+ 60+  0000              ISR_ENTRY_COUNT equ     0xC004  ; 16-bit ISR entry counter
+ 61+  0000              SCRATCH         equ     0xC006  ; Scratch byte
+ 62+  0000
+ 63+  0000              ; DMA source buffers
+ 64+  0000              DMA_PAL_BUF     equ     0xC100  ; Palette DMA buffer (32 bytes: 0xC100-0xC11F)
+ 65+  0000              DMA_TILE_BUF    equ     0xC120  ; Tile pattern buffer (96 bytes: 0xC120-0xC17F)
+ 66+  0000              TILEMAP_BUF     equ     0xC200  ; Tilemap buffer (varies)
+ 67+  0000
+ 68+  0000              ; ==================================================================
+ 69+  0000              ; PAGE SIZES AND CONSTANTS
+ 70+  0000              ; ==================================================================
+ 71+  0000              PAGE_SIZE       equ     2048    ; 2KB per page for base selectors
+ 72+  0000              TILE_SIZE       equ     24      ; 8x8 tile at 4bpp = 24 bytes (3 bytes/row * 8 rows)
+ 73+  0000                                              ; Wait - 4bpp means 4 bits per pixel
+ 74+  0000                                              ; 8 pixels per row = 32 bits = 4 bytes per row
+ 75+  0000                                              ; 8 rows = 32 bytes per tile
+ 76+  0000              TILE_SIZE_4BPP  equ     32      ; Corrected: 8x8 @ 4bpp = 32 bytes
+ 77+  0000
+ 78+  0000              ; Palette
+ 79+  0000              PAL_ENTRIES     equ     16      ; Using 16 palette entries for diagnostics
+ 80+  0000              PAL_BYTE_SIZE   equ     32      ; 16 entries * 2 bytes each = 32 bytes
+ 81+  0000
+ 82+  0000              ; Tilemap
+ 83+  0000              TILEMAP_WIDTH   equ     32      ; Tiles per row
+ 84+  0000              TILEMAP_HEIGHT  equ     24      ; Tile rows
+ 85+  0000              TILEMAP_ENTRY   equ     2       ; 2 bytes per tilemap entry (tile index + attributes)
+ 86+  0000              TILEMAP_SIZE    equ     TILEMAP_WIDTH * TILEMAP_HEIGHT * TILEMAP_ENTRY  ; 1536 bytes
+ 87+  0000
+ 88+  0000              ; Screen
+ 89+  0000              SCREEN_WIDTH    equ     256
+ 90+  0000              SCREEN_HEIGHT   equ     192
+ 91+  0000              VBLANK_START    equ     192     ; VBlank begins at scanline 192
+ 92+  0000              VBLANK_END      equ     261     ; VBlank ends at scanline 261
+ 93+  0000
+ 94+  0000              ; ==================================================================
+ 95+  0000              ; DMA DESTINATION CONVENTIONS
+ 96+  0000              ; ==================================================================
+ 97+  0000              ; When DST_IS_PALETTE bit is set in DMA_CTRL:
+ 98+  0000              ;   DMA_DST is a byte offset into palette RAM (0-255)
+ 99+  0000              ; Otherwise:
+100+  0000              ;   DMA_DST is a VRAM address
+101+  0000
+102+  0000              ; Pattern base: page 0 = VRAM offset 0x0000
+103+  0000              ; Plane A base: page 0 = VRAM offset 0x0000 (for tilemap)
+104+  0000              ; We'll use page 0 for patterns, page 1 for tilemap
+105+  0000              ; Actually, per spec: pick deterministic base page values (e.g., 0 for both)
+106+  0000              PATTERN_PAGE    equ     0       ; Pattern data at page 0 (VRAM 0x0000)
+107+  0000              TILEMAP_PAGE    equ     1       ; Tilemap at page 1 (VRAM 0x0800)
+108+  0000
+109+  0000              PATTERN_VRAM    equ     PATTERN_PAGE * PAGE_SIZE    ; 0x0000
+110+  0000              TILEMAP_VRAM    equ     TILEMAP_PAGE * PAGE_SIZE    ; 0x0800
+111+  0000
+# file closed: hw.inc
+ 14   0000
+ 15   0000              ; ==================================================================
+ 16   0000              ; RESET VECTOR (0x0000)
+ 17   0000              ; ==================================================================
+ 18   0000              reset:
+ 19   0000 F3               di                      ; Disable interrupts
+ 20   0001 31 FE FF         ld      sp, 0xFFFE      ; Initialize stack pointer
+ 21   0004 C3 79 00         jp      init            ; Jump to initialization
+ 22   0007
+ 23   0007              ; ==================================================================
+ 24   0007              ; PADDING TO ISR VECTOR
+ 25   0007              ; ==================================================================
+ 26   0007                  ; Fill space between reset and ISR vector
+ 27   0007 00 00 00...      ds      0x0038 - $, 0x00
+ 28   0038
+ 29   0038              ; ==================================================================
+ 30   0038              ; IM 1 ISR VECTOR (0x0038)
+ 31   0038              ; ==================================================================
+ 32   0038                  org     0x0038
+ 33   0038              isr_vblank:
+ 34   0038 F5               push    af
+ 35   0039 E5               push    hl
+ 36   003A C5               push    bc
+ 37   003B
+ 38   003B                  ; 1. Increment ISR_ENTRY_COUNT (16-bit)
+ 39   003B 2A 04 C0         ld      hl, (ISR_ENTRY_COUNT)
+ 40   003E 23               inc     hl
+ 41   003F 22 04 C0         ld      (ISR_ENTRY_COUNT), hl
+ 42   0042
+ 43   0042                  ; 2. Increment VBLANK_COUNT (16-bit)
+ 44   0042 2A 02 C0         ld      hl, (VBLANK_COUNT)
+ 45   0045 23               inc     hl
+ 46   0046 22 02 C0         ld      (VBLANK_COUNT), hl
+ 47   0049
+ 48   0049                  ; 3. Toggle palette entry 1 between Red <-> Blue
+ 49   0049                  ; Read current value of SCRATCH to determine current color
+ 50   0049 3A 06 C0         ld      a, (SCRATCH)
+ 51   004C EE 01            xor     1               ; Toggle bit 0
+ 52   004E 32 06 C0         ld      (SCRATCH), a
+ 53   0051 E6 01            and     1               ; Isolate toggle bit
+ 54   0053 28 0E            jr      z, .set_red
+ 55   0055
+ 56   0055              .set_blue:
+ 57   0055                  ; Set palette entry 1 to Blue (0x01C0)
+ 58   0055 3E 02            ld      a, 2            ; Palette address = entry 1 * 2 = 2
+ 59   0057 D3 1E            out     (PAL_ADDR), a
+ 60   0059 3E C0            ld      a, 0xC0         ; Low byte of 0x01C0
+ 61   005B D3 1F            out     (PAL_DATA), a
+ 62   005D 3E 01            ld      a, 0x01         ; High byte of 0x01C0
+ 63   005F D3 1F            out     (PAL_DATA), a
+ 64   0061 18 0C            jr      .ack_irq
+ 65   0063
+ 66   0063              .set_red:
+ 67   0063                  ; Set palette entry 1 to Red (0x0007)
+ 68   0063 3E 02            ld      a, 2            ; Palette address = entry 1 * 2 = 2
+ 69   0065 D3 1E            out     (PAL_ADDR), a
+ 70   0067 3E 07            ld      a, 0x07         ; Low byte of 0x0007
+ 71   0069 D3 1F            out     (PAL_DATA), a
+ 72   006B 3E 00            ld      a, 0x00         ; High byte of 0x0007
+ 73   006D D3 1F            out     (PAL_DATA), a
+ 74   006F
+ 75   006F              .ack_irq:
+ 76   006F                  ; 4. ACK VBlank via IRQ_ACK (write bit 0 = 1)
+ 77   006F 3E 01            ld      a, IRQ_VBLANK
+ 78   0071 D3 82            out     (IRQ_ACK), a
+ 79   0073
+ 80   0073 C1               pop     bc
+ 81   0074 E1               pop     hl
+ 82   0075 F1               pop     af
+ 83   0076                  ; 5. RETI
+ 84   0076 FB               ei                      ; Re-enable interrupts before return
+ 85   0077 ED 4D            reti
+ 86   0079
+ 87   0079              ; ==================================================================
+ 88   0079              ; INITIALIZATION
+ 89   0079              ; ==================================================================
+ 90   0079              init:
+ 91   0079                  ; Clear RAM region 0xC000-0xC3FF (1KB)
+ 92   0079 21 00 C0         ld      hl, 0xC000
+ 93   007C 11 01 C0         ld      de, 0xC001
+ 94   007F 01 FF 03         ld      bc, 0x03FF      ; 1023 bytes (first byte set, then copy)
+ 95   0082 AF               xor     a
+ 96   0083 77               ld      (hl), a         ; Set first byte to 0
+ 97   0084 ED B0            ldir                    ; Copy 0 to rest of region
+ 98   0086
+ 99   0086                  ; Initialize video control
+100   0086 CD AE 00         call    init_video
+101   0089
+102   0089                  ; Copy palette data to RAM buffer and DMA to Palette RAM
+103   0089 CD C0 00         call    init_palette
+104   008C
+105   008C                  ; Copy tile patterns to RAM buffer and DMA to VRAM
+106   008C CD E8 00         call    init_tiles
+107   008F
+108   008F                  ; Copy tilemap to RAM buffer and DMA to VRAM
+109   008F CD 13 01         call    init_tilemap
+110   0092
+111   0092                  ; Set IM 1 (interrupt mode 1 - ISR at 0x0038)
+112   0092 ED 56            im      1
+113   0094
+114   0094                  ; Enable VBlank IRQ
+115   0094 3E 01            ld      a, IRQ_VBLANK
+116   0096 D3 81            out     (IRQ_ENABLE), a
+117   0098
+118   0098                  ; Enable interrupts (after all hardware setup)
+119   0098 FB               ei
+120   0099
+121   0099                  ; Fall through to main loop
+122   0099
+123   0099              ; ==================================================================
+124   0099              ; MAIN LOOP (runs forever, no HALT)
+125   0099              ; ==================================================================
+126   0099              main_loop:
+127   0099                  ; Optionally increment FRAME_COUNTER by polling VBlank
+128   0099                  ; Wait for VBlank start (bit 0 of VDP_STATUS = 1)
+129   0099              .wait_vblank:
+130   0099 DB 10            in      a, (VDP_STATUS)
+131   009B E6 01            and     0x01
+132   009D 28 FA            jr      z, .wait_vblank
+133   009F
+134   009F                  ; Increment frame counter
+135   009F 2A 00 C0         ld      hl, (FRAME_COUNTER)
+136   00A2 23               inc     hl
+137   00A3 22 00 C0         ld      (FRAME_COUNTER), hl
+138   00A6
+139   00A6                  ; Wait for VBlank end (bit 0 of VDP_STATUS = 0)
+140   00A6              .wait_vblank_end:
+141   00A6 DB 10            in      a, (VDP_STATUS)
+142   00A8 E6 01            and     0x01
+143   00AA 20 FA            jr      nz, .wait_vblank_end
+144   00AC
+145   00AC                  ; Loop forever
+146   00AC 18 EB            jr      main_loop
+147   00AE
+148   00AE              ; ==================================================================
+149   00AE              ; INIT_VIDEO - Initialize video control registers
+150   00AE              ; ==================================================================
+151   00AE              init_video:
+152   00AE                  ; Set VDP_CTRL: Display enable, Plane A enable, Plane B/Sprites disabled
+153   00AE                  ; VDP_DISPLAY_EN (0x01) | VDP_PLANE_A_EN (0x02) = 0x03
+154   00AE 3E 03            ld      a, VDP_DISPLAY_EN | VDP_PLANE_A_EN
+155   00B0 D3 11            out     (VDP_CTRL), a
+156   00B2
+157   00B2                  ; Set scroll to 0,0
+158   00B2 AF               xor     a
+159   00B3 D3 12            out     (SCROLL_X), a
+160   00B5 D3 13            out     (SCROLL_Y), a
+161   00B7
+162   00B7                  ; Set base page selectors
+163   00B7 3E 00            ld      a, PATTERN_PAGE ; Page 0 for patterns
+164   00B9 D3 18            out     (PATTERN_BASE), a
+165   00BB
+166   00BB 3E 01            ld      a, TILEMAP_PAGE ; Page 1 for tilemap
+167   00BD D3 16            out     (PLANE_A_BASE), a
+168   00BF
+169   00BF C9               ret
+170   00C0
+171   00C0              ; ==================================================================
+172   00C0              ; INIT_PALETTE - Load palette data and DMA to Palette RAM
+173   00C0              ; ==================================================================
+174   00C0              init_palette:
+175   00C0                  ; Copy palette data from ROM to RAM buffer at DMA_PAL_BUF (0xC100)
+176   00C0 21 CB 01         ld      hl, palette_data
+177   00C3 11 00 C1         ld      de, DMA_PAL_BUF
+178   00C6 01 20 00         ld      bc, PALETTE_DATA_SIZE
+179   00C9 ED B0            ldir
+180   00CB
+181   00CB                  ; Wait for VBlank before DMA
+182   00CB CD 3E 01         call    wait_vblank
+183   00CE
+184   00CE                  ; Set up DMA: RAM buffer -> Palette RAM
+185   00CE                  ; Source: DMA_PAL_BUF (0xC100)
+186   00CE 3E 00            ld      a, DMA_PAL_BUF & 0xFF
+187   00D0 D3 30            out     (DMA_SRC_LO), a
+188   00D2 3E C1            ld      a, DMA_PAL_BUF >> 8
+189   00D4 D3 31            out     (DMA_SRC_HI), a
+190   00D6
+191   00D6                  ; Destination: Palette byte 0
+192   00D6 AF               xor     a
+193   00D7 D3 32            out     (DMA_DST_LO), a
+194   00D9 D3 33            out     (DMA_DST_HI), a
+195   00DB
+196   00DB                  ; Length: PALETTE_DATA_SIZE (32 bytes)
+197   00DB 3E 20            ld      a, PALETTE_DATA_SIZE & 0xFF
+198   00DD D3 34            out     (DMA_LEN_LO), a
+199   00DF 3E 00            ld      a, PALETTE_DATA_SIZE >> 8
+200   00E1 D3 35            out     (DMA_LEN_HI), a
+201   00E3
+202   00E3                  ; Start DMA to Palette RAM (DST_IS_PALETTE bit set)
+203   00E3 3E 09            ld      a, DMA_START | DMA_PAL_DST
+204   00E5 D3 36            out     (DMA_CTRL), a
+205   00E7
+206   00E7 C9               ret
+207   00E8
+208   00E8              ; ==================================================================
+209   00E8              ; INIT_TILES - Load tile patterns and DMA to VRAM
+210   00E8              ; ==================================================================
+211   00E8              init_tiles:
+212   00E8                  ; Copy tile data from ROM to RAM buffer at DMA_TILE_BUF (0xC120)
+213   00E8 21 4B 01         ld      hl, tile_0_data
+214   00EB 11 20 C1         ld      de, DMA_TILE_BUF
+215   00EE 01 80 00         ld      bc, TILE_DATA_SIZE
+216   00F1 ED B0            ldir
+217   00F3
+218   00F3                  ; Wait for VBlank before DMA
+219   00F3 CD 3E 01         call    wait_vblank
+220   00F6
+221   00F6                  ; Set up DMA: RAM buffer -> VRAM (pattern base)
+222   00F6                  ; Source: DMA_TILE_BUF (0xC120)
+223   00F6 3E 20            ld      a, DMA_TILE_BUF & 0xFF
+224   00F8 D3 30            out     (DMA_SRC_LO), a
+225   00FA 3E C1            ld      a, DMA_TILE_BUF >> 8
+226   00FC D3 31            out     (DMA_SRC_HI), a
+227   00FE
+228   00FE                  ; Destination: VRAM pattern area (PATTERN_VRAM = 0x0000)
+229   00FE 3E 00            ld      a, PATTERN_VRAM & 0xFF
+230   0100 D3 32            out     (DMA_DST_LO), a
+231   0102 3E 00            ld      a, PATTERN_VRAM >> 8
+232   0104 D3 33            out     (DMA_DST_HI), a
+233   0106
+234   0106                  ; Length: TILE_DATA_SIZE (128 bytes)
+235   0106 3E 80            ld      a, TILE_DATA_SIZE & 0xFF
+236   0108 D3 34            out     (DMA_LEN_LO), a
+237   010A 3E 00            ld      a, TILE_DATA_SIZE >> 8
+238   010C D3 35            out     (DMA_LEN_HI), a
+239   010E
+240   010E                  ; Start DMA to VRAM (DST_IS_PALETTE bit clear)
+241   010E 3E 01            ld      a, DMA_START
+242   0110 D3 36            out     (DMA_CTRL), a
+243   0112
+244   0112 C9               ret
+245   0113
+246   0113              ; ==================================================================
+247   0113              ; INIT_TILEMAP - Load tilemap and DMA to VRAM
+248   0113              ; ==================================================================
+249   0113              init_tilemap:
+250   0113                  ; Copy tilemap data from ROM to RAM buffer at TILEMAP_BUF (0xC200)
+251   0113 21 EB 01         ld      hl, tilemap_data
+252   0116 11 00 C2         ld      de, TILEMAP_BUF
+253   0119 01 00 06         ld      bc, TILEMAP_DATA_SIZE
+254   011C ED B0            ldir
+255   011E
+256   011E                  ; Wait for VBlank before DMA
+257   011E CD 3E 01         call    wait_vblank
+258   0121
+259   0121                  ; Set up DMA: RAM buffer -> VRAM (tilemap base)
+260   0121                  ; Source: TILEMAP_BUF (0xC200)
+261   0121 3E 00            ld      a, TILEMAP_BUF & 0xFF
+262   0123 D3 30            out     (DMA_SRC_LO), a
+263   0125 3E C2            ld      a, TILEMAP_BUF >> 8
+264   0127 D3 31            out     (DMA_SRC_HI), a
+265   0129
+266   0129                  ; Destination: VRAM tilemap area (TILEMAP_VRAM = 0x0800)
+267   0129 3E 00            ld      a, TILEMAP_VRAM & 0xFF
+268   012B D3 32            out     (DMA_DST_LO), a
+269   012D 3E 08            ld      a, TILEMAP_VRAM >> 8
+270   012F D3 33            out     (DMA_DST_HI), a
+271   0131
+272   0131                  ; Length: TILEMAP_DATA_SIZE (1536 bytes)
+273   0131 3E 00            ld      a, TILEMAP_DATA_SIZE & 0xFF
+274   0133 D3 34            out     (DMA_LEN_LO), a
+275   0135 3E 06            ld      a, TILEMAP_DATA_SIZE >> 8
+276   0137 D3 35            out     (DMA_LEN_HI), a
+277   0139
+278   0139                  ; Start DMA to VRAM
+279   0139 3E 01            ld      a, DMA_START
+280   013B D3 36            out     (DMA_CTRL), a
+281   013D
+282   013D C9               ret
+283   013E
+284   013E              ; ==================================================================
+285   013E              ; WAIT_VBLANK - Wait until VBlank starts
+286   013E              ; ==================================================================
+287   013E              wait_vblank:
+288   013E                  ; First wait for any current VBlank to end
+289   013E              .wait_end:
+290   013E DB 10            in      a, (VDP_STATUS)
+291   0140 E6 01            and     0x01
+292   0142 20 FA            jr      nz, .wait_end
+293   0144
+294   0144                  ; Now wait for next VBlank to start
+295   0144              .wait_start:
+296   0144 DB 10            in      a, (VDP_STATUS)
+297   0146 E6 01            and     0x01
+298   0148 28 FA            jr      z, .wait_start
+299   014A
+300   014A C9               ret
+301   014B
+302   014B              ; ==================================================================
+303   014B              ; ROM DATA INCLUDES
+304   014B              ; ==================================================================
+305   014B                  include "tiles.inc"
+# file opened: tiles.inc
+  1+  014B              ; Super_Z80 Diagnostic Cartridge - Tile Patterns
+  2+  014B              ; tiles.inc - 4 tiles, 8x8, 4bpp (32 bytes each)
+  3+  014B              ;
+  4+  014B              ; 4bpp format: 4 bits per pixel, 8 pixels per row
+  5+  014B              ; Each row = 4 bytes (8 pixels * 4 bits / 8 bits per byte)
+  6+  014B              ; Each tile = 8 rows * 4 bytes = 32 bytes
+  7+  014B              ;
+  8+  014B              ; Pixel order in each byte: high nibble = left pixel, low nibble = right pixel
+  9+  014B              ; So for a row of 8 pixels [P0 P1 P2 P3 P4 P5 P6 P7]:
+ 10+  014B              ;   Byte 0 = (P0 << 4) | P1
+ 11+  014B              ;   Byte 1 = (P2 << 4) | P3
+ 12+  014B              ;   Byte 2 = (P4 << 4) | P5
+ 13+  014B              ;   Byte 3 = (P6 << 4) | P7
+ 14+  014B
+ 15+  014B              ; ==================================================================
+ 16+  014B              ; TILE 0: Solid color (palette entry 1 = red/blue, toggles in ISR)
+ 17+  014B              ; ==================================================================
+ 18+  014B              ; All pixels use palette index 1
+ 19+  014B              tile_0_data:
+ 20+  014B 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 0: 1 1 1 1 1 1 1 1
+ 21+  014F 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 1
+ 22+  0153 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 2
+ 23+  0157 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 3
+ 24+  015B 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 4
+ 25+  015F 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 5
+ 26+  0163 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 6
+ 27+  0167 11 11 11 11      db  0x11, 0x11, 0x11, 0x11  ; Row 7
+ 28+  016B
+ 29+  016B              ; ==================================================================
+ 30+  016B              ; TILE 1: Checkerboard (palette entries 2 and 3 = green and blue)
+ 31+  016B              ; ==================================================================
+ 32+  016B              ; Alternating 2x2 blocks of palette 2 and 3
+ 33+  016B              tile_1_data:
+ 34+  016B 22 33 22 33      db  0x22, 0x33, 0x22, 0x33  ; Row 0: 2 2 3 3 2 2 3 3
+ 35+  016F 22 33 22 33      db  0x22, 0x33, 0x22, 0x33  ; Row 1: 2 2 3 3 2 2 3 3
+ 36+  0173 33 22 33 22      db  0x33, 0x22, 0x33, 0x22  ; Row 2: 3 3 2 2 3 3 2 2
+ 37+  0177 33 22 33 22      db  0x33, 0x22, 0x33, 0x22  ; Row 3: 3 3 2 2 3 3 2 2
+ 38+  017B 22 33 22 33      db  0x22, 0x33, 0x22, 0x33  ; Row 4
+ 39+  017F 22 33 22 33      db  0x22, 0x33, 0x22, 0x33  ; Row 5
+ 40+  0183 33 22 33 22      db  0x33, 0x22, 0x33, 0x22  ; Row 6
+ 41+  0187 33 22 33 22      db  0x33, 0x22, 0x33, 0x22  ; Row 7
+ 42+  018B
+ 43+  018B              ; ==================================================================
+ 44+  018B              ; TILE 2: Vertical stripes (palette entries 4 and 0 = white and black)
+ 45+  018B              ; ==================================================================
+ 46+  018B              ; Alternating columns of palette 4 (white) and 0 (black)
+ 47+  018B              tile_2_data:
+ 48+  018B 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 0: 4 0 4 0 4 0 4 0
+ 49+  018F 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 1
+ 50+  0193 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 2
+ 51+  0197 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 3
+ 52+  019B 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 4
+ 53+  019F 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 5
+ 54+  01A3 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 6
+ 55+  01A7 40 40 40 40      db  0x40, 0x40, 0x40, 0x40  ; Row 7
+ 56+  01AB
+ 57+  01AB              ; ==================================================================
+ 58+  01AB              ; TILE 3: Horizontal stripes (palette entries 4 and 0 = white and black)
+ 59+  01AB              ; ==================================================================
+ 60+  01AB              ; Alternating rows of palette 4 (white) and 0 (black)
+ 61+  01AB              tile_3_data:
+ 62+  01AB 44 44 44 44      db  0x44, 0x44, 0x44, 0x44  ; Row 0: 4 4 4 4 4 4 4 4
+ 63+  01AF 00 00 00 00      db  0x00, 0x00, 0x00, 0x00  ; Row 1: 0 0 0 0 0 0 0 0
+ 64+  01B3 44 44 44 44      db  0x44, 0x44, 0x44, 0x44  ; Row 2
+ 65+  01B7 00 00 00 00      db  0x00, 0x00, 0x00, 0x00  ; Row 3
+ 66+  01BB 44 44 44 44      db  0x44, 0x44, 0x44, 0x44  ; Row 4
+ 67+  01BF 00 00 00 00      db  0x00, 0x00, 0x00, 0x00  ; Row 5
+ 68+  01C3 44 44 44 44      db  0x44, 0x44, 0x44, 0x44  ; Row 6
+ 69+  01C7 00 00 00 00      db  0x00, 0x00, 0x00, 0x00  ; Row 7
+ 70+  01CB
+ 71+  01CB              ; Total tile data size: 4 tiles * 32 bytes = 128 bytes
+ 72+  01CB              TILE_DATA_SIZE  equ     128
+ 73+  01CB
+# file closed: tiles.inc
+306   01CB                  include "palette.inc"
+# file opened: palette.inc
+  1+  01CB              ; Super_Z80 Diagnostic Cartridge - Palette Data
+  2+  01CB              ; palette.inc - 16 palette entries, 9-bit RGB
+  3+  01CB              ;
+  4+  01CB              ; Palette format (per PPU spec):
+  5+  01CB              ;   uint16_t packed as:
+  6+  01CB              ;   Bits 0-2: Red   (0-7)
+  7+  01CB              ;   Bits 3-5: Green (0-7)
+  8+  01CB              ;   Bits 6-8: Blue  (0-7)
+  9+  01CB              ;   Bits 9-15: Reserved (0)
+ 10+  01CB              ;
+ 11+  01CB              ; Stored little-endian (low byte first)
+ 12+  01CB              ; Formula: packed = R | (G << 3) | (B << 6)
+ 13+  01CB
+ 14+  01CB              ; ==================================================================
+ 15+  01CB              ; PALETTE DATA (16 entries = 32 bytes)
+ 16+  01CB              ; ==================================================================
+ 17+  01CB              palette_data:
+ 18+  01CB                  ; Entry 0: Black (R=0, G=0, B=0)
+ 19+  01CB                  ; packed = 0 | (0<<3) | (0<<6) = 0x0000
+ 20+  01CB 00 00            dw  0x0000
+ 21+  01CD
+ 22+  01CD                  ; Entry 1: Red (R=7, G=0, B=0) - will toggle with blue in ISR
+ 23+  01CD                  ; packed = 7 | (0<<3) | (0<<6) = 0x0007
+ 24+  01CD 07 00            dw  0x0007
+ 25+  01CF
+ 26+  01CF                  ; Entry 2: Green (R=0, G=7, B=0)
+ 27+  01CF                  ; packed = 0 | (7<<3) | (0<<6) = 0x0038
+ 28+  01CF 38 00            dw  0x0038
+ 29+  01D1
+ 30+  01D1                  ; Entry 3: Blue (R=0, G=0, B=7)
+ 31+  01D1                  ; packed = 0 | (0<<3) | (7<<6) = 0x01C0
+ 32+  01D1 C0 01            dw  0x01C0
+ 33+  01D3
+ 34+  01D3                  ; Entry 4: White (R=7, G=7, B=7)
+ 35+  01D3                  ; packed = 7 | (7<<3) | (7<<6) = 0x01FF
+ 36+  01D3 FF 01            dw  0x01FF
+ 37+  01D5
+ 38+  01D5                  ; Entry 5: Yellow (R=7, G=7, B=0)
+ 39+  01D5                  ; packed = 7 | (7<<3) | (0<<6) = 0x003F
+ 40+  01D5 3F 00            dw  0x003F
+ 41+  01D7
+ 42+  01D7                  ; Entry 6: Cyan (R=0, G=7, B=7)
+ 43+  01D7                  ; packed = 0 | (7<<3) | (7<<6) = 0x01F8
+ 44+  01D7 F8 01            dw  0x01F8
+ 45+  01D9
+ 46+  01D9                  ; Entry 7: Magenta (R=7, G=0, B=7)
+ 47+  01D9                  ; packed = 7 | (0<<3) | (7<<6) = 0x01C7
+ 48+  01D9 C7 01            dw  0x01C7
+ 49+  01DB
+ 50+  01DB                  ; Entries 8-15: Gradient (grayscale ramp)
+ 51+  01DB                  ; Entry 8: Dark gray (R=1, G=1, B=1) = 1|(1<<3)|(1<<6) = 0x0049
+ 52+  01DB 49 00            dw  0x0049
+ 53+  01DD                  ; Entry 9: (R=2, G=2, B=2) = 2|(2<<3)|(2<<6) = 0x0092
+ 54+  01DD 92 00            dw  0x0092
+ 55+  01DF                  ; Entry 10: (R=3, G=3, B=3) = 3|(3<<3)|(3<<6) = 0x00DB
+ 56+  01DF DB 00            dw  0x00DB
+ 57+  01E1                  ; Entry 11: (R=4, G=4, B=4) = 4|(4<<3)|(4<<6) = 0x0124
+ 58+  01E1 24 01            dw  0x0124
+ 59+  01E3                  ; Entry 12: (R=5, G=5, B=5) = 5|(5<<3)|(5<<6) = 0x016D
+ 60+  01E3 6D 01            dw  0x016D
+ 61+  01E5                  ; Entry 13: (R=6, G=6, B=6) = 6|(6<<3)|(6<<6) = 0x01B6
+ 62+  01E5 B6 01            dw  0x01B6
+ 63+  01E7                  ; Entry 14: Duplicate white
+ 64+  01E7 FF 01            dw  0x01FF
+ 65+  01E9                  ; Entry 15: Duplicate black
+ 66+  01E9 00 00            dw  0x0000
+ 67+  01EB
+ 68+  01EB              PALETTE_DATA_SIZE   equ     32      ; 16 entries * 2 bytes
+ 69+  01EB
+ 70+  01EB              ; Color constants for ISR palette toggle
+ 71+  01EB              COLOR_RED       equ     0x0007  ; R=7, G=0, B=0
+ 72+  01EB              COLOR_BLUE      equ     0x01C0  ; R=0, G=0, B=7
+ 73+  01EB
+# file closed: palette.inc
+307   01EB                  include "tilemap.inc"
+# file opened: tilemap.inc
+  1+  01EB              ; Super_Z80 Diagnostic Cartridge - Tilemap Data
+  2+  01EB              ; tilemap.inc - 32x24 tilemap generator macros
+  3+  01EB              ;
+  4+  01EB              ; Tilemap entry format (2 bytes per tile):
+  5+  01EB              ;   Byte 0: Tile index (0-255)
+  6+  01EB              ;   Byte 1: Attributes
+  7+  01EB              ;           Bits 0-3: Palette selector (0-15)
+  8+  01EB              ;           Bit 4:    Horizontal flip
+  9+  01EB              ;           Bit 5:    Vertical flip
+ 10+  01EB              ;           Bits 6-7: Priority (0 = normal)
+ 11+  01EB              ;
+ 12+  01EB              ; Pattern: Each row repeats [0 1 2 3 0 1 2 3 ...]
+ 13+  01EB              ; Attributes: Palette 0, no flip, normal priority = 0x00
+ 14+  01EB
+ 15+  01EB              ; ==================================================================
+ 16+  01EB              ; TILEMAP ROW MACRO
+ 17+  01EB              ; ==================================================================
+ 18+  01EB              ; Generates one row of 32 tiles with pattern [0 1 2 3] repeated 8 times
+ 19+  01EB              ; Each tile entry is 2 bytes: tile_index, attributes
+ 20+  01EB              TILEMAP_ROW     MACRO
+ 21+  01EB ~                db  0, 0    ; Tile 0, attrs 0
+ 22+  01EB ~                db  1, 0    ; Tile 1, attrs 0
+ 23+  01EB ~                db  2, 0    ; Tile 2, attrs 0
+ 24+  01EB ~                db  3, 0    ; Tile 3, attrs 0
+ 25+  01EB ~                db  0, 0
+ 26+  01EB ~                db  1, 0
+ 27+  01EB ~                db  2, 0
+ 28+  01EB ~                db  3, 0
+ 29+  01EB ~                db  0, 0
+ 30+  01EB ~                db  1, 0
+ 31+  01EB ~                db  2, 0
+ 32+  01EB ~                db  3, 0
+ 33+  01EB ~                db  0, 0
+ 34+  01EB ~                db  1, 0
+ 35+  01EB ~                db  2, 0
+ 36+  01EB ~                db  3, 0
+ 37+  01EB ~                db  0, 0
+ 38+  01EB ~                db  1, 0
+ 39+  01EB ~                db  2, 0
+ 40+  01EB ~                db  3, 0
+ 41+  01EB ~                db  0, 0
+ 42+  01EB ~                db  1, 0
+ 43+  01EB ~                db  2, 0
+ 44+  01EB ~                db  3, 0
+ 45+  01EB ~                db  0, 0
+ 46+  01EB ~                db  1, 0
+ 47+  01EB ~                db  2, 0
+ 48+  01EB ~                db  3, 0
+ 49+  01EB ~                db  0, 0
+ 50+  01EB ~                db  1, 0
+ 51+  01EB ~                db  2, 0
+ 52+  01EB ~                db  3, 0
+ 53+  01EB              ENDM
+ 54+  01EB
+ 55+  01EB              ; ==================================================================
+ 56+  01EB              ; FULL TILEMAP (32x24 = 768 tiles = 1536 bytes)
+ 57+  01EB              ; ==================================================================
+ 58+  01EB              tilemap_data:
+ 59+  01EB                  TILEMAP_ROW     ; Row 0
+ 59+  01EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 59+  01ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 59+  01EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 59+  01F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 59+  01F3 00 00       >    db  0, 0
+ 59+  01F5 01 00       >    db  1, 0
+ 59+  01F7 02 00       >    db  2, 0
+ 59+  01F9 03 00       >    db  3, 0
+ 59+  01FB 00 00       >    db  0, 0
+ 59+  01FD 01 00       >    db  1, 0
+ 59+  01FF 02 00       >    db  2, 0
+ 59+  0201 03 00       >    db  3, 0
+ 59+  0203 00 00       >    db  0, 0
+ 59+  0205 01 00       >    db  1, 0
+ 59+  0207 02 00       >    db  2, 0
+ 59+  0209 03 00       >    db  3, 0
+ 59+  020B 00 00       >    db  0, 0
+ 59+  020D 01 00       >    db  1, 0
+ 59+  020F 02 00       >    db  2, 0
+ 59+  0211 03 00       >    db  3, 0
+ 59+  0213 00 00       >    db  0, 0
+ 59+  0215 01 00       >    db  1, 0
+ 59+  0217 02 00       >    db  2, 0
+ 59+  0219 03 00       >    db  3, 0
+ 59+  021B 00 00       >    db  0, 0
+ 59+  021D 01 00       >    db  1, 0
+ 59+  021F 02 00       >    db  2, 0
+ 59+  0221 03 00       >    db  3, 0
+ 59+  0223 00 00       >    db  0, 0
+ 59+  0225 01 00       >    db  1, 0
+ 59+  0227 02 00       >    db  2, 0
+ 59+  0229 03 00       >    db  3, 0
+ 60+  022B                  TILEMAP_ROW     ; Row 1
+ 60+  022B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 60+  022D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 60+  022F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 60+  0231 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 60+  0233 00 00       >    db  0, 0
+ 60+  0235 01 00       >    db  1, 0
+ 60+  0237 02 00       >    db  2, 0
+ 60+  0239 03 00       >    db  3, 0
+ 60+  023B 00 00       >    db  0, 0
+ 60+  023D 01 00       >    db  1, 0
+ 60+  023F 02 00       >    db  2, 0
+ 60+  0241 03 00       >    db  3, 0
+ 60+  0243 00 00       >    db  0, 0
+ 60+  0245 01 00       >    db  1, 0
+ 60+  0247 02 00       >    db  2, 0
+ 60+  0249 03 00       >    db  3, 0
+ 60+  024B 00 00       >    db  0, 0
+ 60+  024D 01 00       >    db  1, 0
+ 60+  024F 02 00       >    db  2, 0
+ 60+  0251 03 00       >    db  3, 0
+ 60+  0253 00 00       >    db  0, 0
+ 60+  0255 01 00       >    db  1, 0
+ 60+  0257 02 00       >    db  2, 0
+ 60+  0259 03 00       >    db  3, 0
+ 60+  025B 00 00       >    db  0, 0
+ 60+  025D 01 00       >    db  1, 0
+ 60+  025F 02 00       >    db  2, 0
+ 60+  0261 03 00       >    db  3, 0
+ 60+  0263 00 00       >    db  0, 0
+ 60+  0265 01 00       >    db  1, 0
+ 60+  0267 02 00       >    db  2, 0
+ 60+  0269 03 00       >    db  3, 0
+ 61+  026B                  TILEMAP_ROW     ; Row 2
+ 61+  026B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 61+  026D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 61+  026F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 61+  0271 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 61+  0273 00 00       >    db  0, 0
+ 61+  0275 01 00       >    db  1, 0
+ 61+  0277 02 00       >    db  2, 0
+ 61+  0279 03 00       >    db  3, 0
+ 61+  027B 00 00       >    db  0, 0
+ 61+  027D 01 00       >    db  1, 0
+ 61+  027F 02 00       >    db  2, 0
+ 61+  0281 03 00       >    db  3, 0
+ 61+  0283 00 00       >    db  0, 0
+ 61+  0285 01 00       >    db  1, 0
+ 61+  0287 02 00       >    db  2, 0
+ 61+  0289 03 00       >    db  3, 0
+ 61+  028B 00 00       >    db  0, 0
+ 61+  028D 01 00       >    db  1, 0
+ 61+  028F 02 00       >    db  2, 0
+ 61+  0291 03 00       >    db  3, 0
+ 61+  0293 00 00       >    db  0, 0
+ 61+  0295 01 00       >    db  1, 0
+ 61+  0297 02 00       >    db  2, 0
+ 61+  0299 03 00       >    db  3, 0
+ 61+  029B 00 00       >    db  0, 0
+ 61+  029D 01 00       >    db  1, 0
+ 61+  029F 02 00       >    db  2, 0
+ 61+  02A1 03 00       >    db  3, 0
+ 61+  02A3 00 00       >    db  0, 0
+ 61+  02A5 01 00       >    db  1, 0
+ 61+  02A7 02 00       >    db  2, 0
+ 61+  02A9 03 00       >    db  3, 0
+ 62+  02AB                  TILEMAP_ROW     ; Row 3
+ 62+  02AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 62+  02AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 62+  02AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 62+  02B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 62+  02B3 00 00       >    db  0, 0
+ 62+  02B5 01 00       >    db  1, 0
+ 62+  02B7 02 00       >    db  2, 0
+ 62+  02B9 03 00       >    db  3, 0
+ 62+  02BB 00 00       >    db  0, 0
+ 62+  02BD 01 00       >    db  1, 0
+ 62+  02BF 02 00       >    db  2, 0
+ 62+  02C1 03 00       >    db  3, 0
+ 62+  02C3 00 00       >    db  0, 0
+ 62+  02C5 01 00       >    db  1, 0
+ 62+  02C7 02 00       >    db  2, 0
+ 62+  02C9 03 00       >    db  3, 0
+ 62+  02CB 00 00       >    db  0, 0
+ 62+  02CD 01 00       >    db  1, 0
+ 62+  02CF 02 00       >    db  2, 0
+ 62+  02D1 03 00       >    db  3, 0
+ 62+  02D3 00 00       >    db  0, 0
+ 62+  02D5 01 00       >    db  1, 0
+ 62+  02D7 02 00       >    db  2, 0
+ 62+  02D9 03 00       >    db  3, 0
+ 62+  02DB 00 00       >    db  0, 0
+ 62+  02DD 01 00       >    db  1, 0
+ 62+  02DF 02 00       >    db  2, 0
+ 62+  02E1 03 00       >    db  3, 0
+ 62+  02E3 00 00       >    db  0, 0
+ 62+  02E5 01 00       >    db  1, 0
+ 62+  02E7 02 00       >    db  2, 0
+ 62+  02E9 03 00       >    db  3, 0
+ 63+  02EB                  TILEMAP_ROW     ; Row 4
+ 63+  02EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 63+  02ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 63+  02EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 63+  02F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 63+  02F3 00 00       >    db  0, 0
+ 63+  02F5 01 00       >    db  1, 0
+ 63+  02F7 02 00       >    db  2, 0
+ 63+  02F9 03 00       >    db  3, 0
+ 63+  02FB 00 00       >    db  0, 0
+ 63+  02FD 01 00       >    db  1, 0
+ 63+  02FF 02 00       >    db  2, 0
+ 63+  0301 03 00       >    db  3, 0
+ 63+  0303 00 00       >    db  0, 0
+ 63+  0305 01 00       >    db  1, 0
+ 63+  0307 02 00       >    db  2, 0
+ 63+  0309 03 00       >    db  3, 0
+ 63+  030B 00 00       >    db  0, 0
+ 63+  030D 01 00       >    db  1, 0
+ 63+  030F 02 00       >    db  2, 0
+ 63+  0311 03 00       >    db  3, 0
+ 63+  0313 00 00       >    db  0, 0
+ 63+  0315 01 00       >    db  1, 0
+ 63+  0317 02 00       >    db  2, 0
+ 63+  0319 03 00       >    db  3, 0
+ 63+  031B 00 00       >    db  0, 0
+ 63+  031D 01 00       >    db  1, 0
+ 63+  031F 02 00       >    db  2, 0
+ 63+  0321 03 00       >    db  3, 0
+ 63+  0323 00 00       >    db  0, 0
+ 63+  0325 01 00       >    db  1, 0
+ 63+  0327 02 00       >    db  2, 0
+ 63+  0329 03 00       >    db  3, 0
+ 64+  032B                  TILEMAP_ROW     ; Row 5
+ 64+  032B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 64+  032D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 64+  032F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 64+  0331 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 64+  0333 00 00       >    db  0, 0
+ 64+  0335 01 00       >    db  1, 0
+ 64+  0337 02 00       >    db  2, 0
+ 64+  0339 03 00       >    db  3, 0
+ 64+  033B 00 00       >    db  0, 0
+ 64+  033D 01 00       >    db  1, 0
+ 64+  033F 02 00       >    db  2, 0
+ 64+  0341 03 00       >    db  3, 0
+ 64+  0343 00 00       >    db  0, 0
+ 64+  0345 01 00       >    db  1, 0
+ 64+  0347 02 00       >    db  2, 0
+ 64+  0349 03 00       >    db  3, 0
+ 64+  034B 00 00       >    db  0, 0
+ 64+  034D 01 00       >    db  1, 0
+ 64+  034F 02 00       >    db  2, 0
+ 64+  0351 03 00       >    db  3, 0
+ 64+  0353 00 00       >    db  0, 0
+ 64+  0355 01 00       >    db  1, 0
+ 64+  0357 02 00       >    db  2, 0
+ 64+  0359 03 00       >    db  3, 0
+ 64+  035B 00 00       >    db  0, 0
+ 64+  035D 01 00       >    db  1, 0
+ 64+  035F 02 00       >    db  2, 0
+ 64+  0361 03 00       >    db  3, 0
+ 64+  0363 00 00       >    db  0, 0
+ 64+  0365 01 00       >    db  1, 0
+ 64+  0367 02 00       >    db  2, 0
+ 64+  0369 03 00       >    db  3, 0
+ 65+  036B                  TILEMAP_ROW     ; Row 6
+ 65+  036B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 65+  036D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 65+  036F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 65+  0371 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 65+  0373 00 00       >    db  0, 0
+ 65+  0375 01 00       >    db  1, 0
+ 65+  0377 02 00       >    db  2, 0
+ 65+  0379 03 00       >    db  3, 0
+ 65+  037B 00 00       >    db  0, 0
+ 65+  037D 01 00       >    db  1, 0
+ 65+  037F 02 00       >    db  2, 0
+ 65+  0381 03 00       >    db  3, 0
+ 65+  0383 00 00       >    db  0, 0
+ 65+  0385 01 00       >    db  1, 0
+ 65+  0387 02 00       >    db  2, 0
+ 65+  0389 03 00       >    db  3, 0
+ 65+  038B 00 00       >    db  0, 0
+ 65+  038D 01 00       >    db  1, 0
+ 65+  038F 02 00       >    db  2, 0
+ 65+  0391 03 00       >    db  3, 0
+ 65+  0393 00 00       >    db  0, 0
+ 65+  0395 01 00       >    db  1, 0
+ 65+  0397 02 00       >    db  2, 0
+ 65+  0399 03 00       >    db  3, 0
+ 65+  039B 00 00       >    db  0, 0
+ 65+  039D 01 00       >    db  1, 0
+ 65+  039F 02 00       >    db  2, 0
+ 65+  03A1 03 00       >    db  3, 0
+ 65+  03A3 00 00       >    db  0, 0
+ 65+  03A5 01 00       >    db  1, 0
+ 65+  03A7 02 00       >    db  2, 0
+ 65+  03A9 03 00       >    db  3, 0
+ 66+  03AB                  TILEMAP_ROW     ; Row 7
+ 66+  03AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 66+  03AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 66+  03AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 66+  03B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 66+  03B3 00 00       >    db  0, 0
+ 66+  03B5 01 00       >    db  1, 0
+ 66+  03B7 02 00       >    db  2, 0
+ 66+  03B9 03 00       >    db  3, 0
+ 66+  03BB 00 00       >    db  0, 0
+ 66+  03BD 01 00       >    db  1, 0
+ 66+  03BF 02 00       >    db  2, 0
+ 66+  03C1 03 00       >    db  3, 0
+ 66+  03C3 00 00       >    db  0, 0
+ 66+  03C5 01 00       >    db  1, 0
+ 66+  03C7 02 00       >    db  2, 0
+ 66+  03C9 03 00       >    db  3, 0
+ 66+  03CB 00 00       >    db  0, 0
+ 66+  03CD 01 00       >    db  1, 0
+ 66+  03CF 02 00       >    db  2, 0
+ 66+  03D1 03 00       >    db  3, 0
+ 66+  03D3 00 00       >    db  0, 0
+ 66+  03D5 01 00       >    db  1, 0
+ 66+  03D7 02 00       >    db  2, 0
+ 66+  03D9 03 00       >    db  3, 0
+ 66+  03DB 00 00       >    db  0, 0
+ 66+  03DD 01 00       >    db  1, 0
+ 66+  03DF 02 00       >    db  2, 0
+ 66+  03E1 03 00       >    db  3, 0
+ 66+  03E3 00 00       >    db  0, 0
+ 66+  03E5 01 00       >    db  1, 0
+ 66+  03E7 02 00       >    db  2, 0
+ 66+  03E9 03 00       >    db  3, 0
+ 67+  03EB                  TILEMAP_ROW     ; Row 8
+ 67+  03EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 67+  03ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 67+  03EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 67+  03F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 67+  03F3 00 00       >    db  0, 0
+ 67+  03F5 01 00       >    db  1, 0
+ 67+  03F7 02 00       >    db  2, 0
+ 67+  03F9 03 00       >    db  3, 0
+ 67+  03FB 00 00       >    db  0, 0
+ 67+  03FD 01 00       >    db  1, 0
+ 67+  03FF 02 00       >    db  2, 0
+ 67+  0401 03 00       >    db  3, 0
+ 67+  0403 00 00       >    db  0, 0
+ 67+  0405 01 00       >    db  1, 0
+ 67+  0407 02 00       >    db  2, 0
+ 67+  0409 03 00       >    db  3, 0
+ 67+  040B 00 00       >    db  0, 0
+ 67+  040D 01 00       >    db  1, 0
+ 67+  040F 02 00       >    db  2, 0
+ 67+  0411 03 00       >    db  3, 0
+ 67+  0413 00 00       >    db  0, 0
+ 67+  0415 01 00       >    db  1, 0
+ 67+  0417 02 00       >    db  2, 0
+ 67+  0419 03 00       >    db  3, 0
+ 67+  041B 00 00       >    db  0, 0
+ 67+  041D 01 00       >    db  1, 0
+ 67+  041F 02 00       >    db  2, 0
+ 67+  0421 03 00       >    db  3, 0
+ 67+  0423 00 00       >    db  0, 0
+ 67+  0425 01 00       >    db  1, 0
+ 67+  0427 02 00       >    db  2, 0
+ 67+  0429 03 00       >    db  3, 0
+ 68+  042B                  TILEMAP_ROW     ; Row 9
+ 68+  042B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 68+  042D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 68+  042F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 68+  0431 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 68+  0433 00 00       >    db  0, 0
+ 68+  0435 01 00       >    db  1, 0
+ 68+  0437 02 00       >    db  2, 0
+ 68+  0439 03 00       >    db  3, 0
+ 68+  043B 00 00       >    db  0, 0
+ 68+  043D 01 00       >    db  1, 0
+ 68+  043F 02 00       >    db  2, 0
+ 68+  0441 03 00       >    db  3, 0
+ 68+  0443 00 00       >    db  0, 0
+ 68+  0445 01 00       >    db  1, 0
+ 68+  0447 02 00       >    db  2, 0
+ 68+  0449 03 00       >    db  3, 0
+ 68+  044B 00 00       >    db  0, 0
+ 68+  044D 01 00       >    db  1, 0
+ 68+  044F 02 00       >    db  2, 0
+ 68+  0451 03 00       >    db  3, 0
+ 68+  0453 00 00       >    db  0, 0
+ 68+  0455 01 00       >    db  1, 0
+ 68+  0457 02 00       >    db  2, 0
+ 68+  0459 03 00       >    db  3, 0
+ 68+  045B 00 00       >    db  0, 0
+ 68+  045D 01 00       >    db  1, 0
+ 68+  045F 02 00       >    db  2, 0
+ 68+  0461 03 00       >    db  3, 0
+ 68+  0463 00 00       >    db  0, 0
+ 68+  0465 01 00       >    db  1, 0
+ 68+  0467 02 00       >    db  2, 0
+ 68+  0469 03 00       >    db  3, 0
+ 69+  046B                  TILEMAP_ROW     ; Row 10
+ 69+  046B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 69+  046D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 69+  046F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 69+  0471 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 69+  0473 00 00       >    db  0, 0
+ 69+  0475 01 00       >    db  1, 0
+ 69+  0477 02 00       >    db  2, 0
+ 69+  0479 03 00       >    db  3, 0
+ 69+  047B 00 00       >    db  0, 0
+ 69+  047D 01 00       >    db  1, 0
+ 69+  047F 02 00       >    db  2, 0
+ 69+  0481 03 00       >    db  3, 0
+ 69+  0483 00 00       >    db  0, 0
+ 69+  0485 01 00       >    db  1, 0
+ 69+  0487 02 00       >    db  2, 0
+ 69+  0489 03 00       >    db  3, 0
+ 69+  048B 00 00       >    db  0, 0
+ 69+  048D 01 00       >    db  1, 0
+ 69+  048F 02 00       >    db  2, 0
+ 69+  0491 03 00       >    db  3, 0
+ 69+  0493 00 00       >    db  0, 0
+ 69+  0495 01 00       >    db  1, 0
+ 69+  0497 02 00       >    db  2, 0
+ 69+  0499 03 00       >    db  3, 0
+ 69+  049B 00 00       >    db  0, 0
+ 69+  049D 01 00       >    db  1, 0
+ 69+  049F 02 00       >    db  2, 0
+ 69+  04A1 03 00       >    db  3, 0
+ 69+  04A3 00 00       >    db  0, 0
+ 69+  04A5 01 00       >    db  1, 0
+ 69+  04A7 02 00       >    db  2, 0
+ 69+  04A9 03 00       >    db  3, 0
+ 70+  04AB                  TILEMAP_ROW     ; Row 11
+ 70+  04AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 70+  04AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 70+  04AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 70+  04B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 70+  04B3 00 00       >    db  0, 0
+ 70+  04B5 01 00       >    db  1, 0
+ 70+  04B7 02 00       >    db  2, 0
+ 70+  04B9 03 00       >    db  3, 0
+ 70+  04BB 00 00       >    db  0, 0
+ 70+  04BD 01 00       >    db  1, 0
+ 70+  04BF 02 00       >    db  2, 0
+ 70+  04C1 03 00       >    db  3, 0
+ 70+  04C3 00 00       >    db  0, 0
+ 70+  04C5 01 00       >    db  1, 0
+ 70+  04C7 02 00       >    db  2, 0
+ 70+  04C9 03 00       >    db  3, 0
+ 70+  04CB 00 00       >    db  0, 0
+ 70+  04CD 01 00       >    db  1, 0
+ 70+  04CF 02 00       >    db  2, 0
+ 70+  04D1 03 00       >    db  3, 0
+ 70+  04D3 00 00       >    db  0, 0
+ 70+  04D5 01 00       >    db  1, 0
+ 70+  04D7 02 00       >    db  2, 0
+ 70+  04D9 03 00       >    db  3, 0
+ 70+  04DB 00 00       >    db  0, 0
+ 70+  04DD 01 00       >    db  1, 0
+ 70+  04DF 02 00       >    db  2, 0
+ 70+  04E1 03 00       >    db  3, 0
+ 70+  04E3 00 00       >    db  0, 0
+ 70+  04E5 01 00       >    db  1, 0
+ 70+  04E7 02 00       >    db  2, 0
+ 70+  04E9 03 00       >    db  3, 0
+ 71+  04EB                  TILEMAP_ROW     ; Row 12
+ 71+  04EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 71+  04ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 71+  04EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 71+  04F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 71+  04F3 00 00       >    db  0, 0
+ 71+  04F5 01 00       >    db  1, 0
+ 71+  04F7 02 00       >    db  2, 0
+ 71+  04F9 03 00       >    db  3, 0
+ 71+  04FB 00 00       >    db  0, 0
+ 71+  04FD 01 00       >    db  1, 0
+ 71+  04FF 02 00       >    db  2, 0
+ 71+  0501 03 00       >    db  3, 0
+ 71+  0503 00 00       >    db  0, 0
+ 71+  0505 01 00       >    db  1, 0
+ 71+  0507 02 00       >    db  2, 0
+ 71+  0509 03 00       >    db  3, 0
+ 71+  050B 00 00       >    db  0, 0
+ 71+  050D 01 00       >    db  1, 0
+ 71+  050F 02 00       >    db  2, 0
+ 71+  0511 03 00       >    db  3, 0
+ 71+  0513 00 00       >    db  0, 0
+ 71+  0515 01 00       >    db  1, 0
+ 71+  0517 02 00       >    db  2, 0
+ 71+  0519 03 00       >    db  3, 0
+ 71+  051B 00 00       >    db  0, 0
+ 71+  051D 01 00       >    db  1, 0
+ 71+  051F 02 00       >    db  2, 0
+ 71+  0521 03 00       >    db  3, 0
+ 71+  0523 00 00       >    db  0, 0
+ 71+  0525 01 00       >    db  1, 0
+ 71+  0527 02 00       >    db  2, 0
+ 71+  0529 03 00       >    db  3, 0
+ 72+  052B                  TILEMAP_ROW     ; Row 13
+ 72+  052B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 72+  052D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 72+  052F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 72+  0531 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 72+  0533 00 00       >    db  0, 0
+ 72+  0535 01 00       >    db  1, 0
+ 72+  0537 02 00       >    db  2, 0
+ 72+  0539 03 00       >    db  3, 0
+ 72+  053B 00 00       >    db  0, 0
+ 72+  053D 01 00       >    db  1, 0
+ 72+  053F 02 00       >    db  2, 0
+ 72+  0541 03 00       >    db  3, 0
+ 72+  0543 00 00       >    db  0, 0
+ 72+  0545 01 00       >    db  1, 0
+ 72+  0547 02 00       >    db  2, 0
+ 72+  0549 03 00       >    db  3, 0
+ 72+  054B 00 00       >    db  0, 0
+ 72+  054D 01 00       >    db  1, 0
+ 72+  054F 02 00       >    db  2, 0
+ 72+  0551 03 00       >    db  3, 0
+ 72+  0553 00 00       >    db  0, 0
+ 72+  0555 01 00       >    db  1, 0
+ 72+  0557 02 00       >    db  2, 0
+ 72+  0559 03 00       >    db  3, 0
+ 72+  055B 00 00       >    db  0, 0
+ 72+  055D 01 00       >    db  1, 0
+ 72+  055F 02 00       >    db  2, 0
+ 72+  0561 03 00       >    db  3, 0
+ 72+  0563 00 00       >    db  0, 0
+ 72+  0565 01 00       >    db  1, 0
+ 72+  0567 02 00       >    db  2, 0
+ 72+  0569 03 00       >    db  3, 0
+ 73+  056B                  TILEMAP_ROW     ; Row 14
+ 73+  056B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 73+  056D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 73+  056F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 73+  0571 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 73+  0573 00 00       >    db  0, 0
+ 73+  0575 01 00       >    db  1, 0
+ 73+  0577 02 00       >    db  2, 0
+ 73+  0579 03 00       >    db  3, 0
+ 73+  057B 00 00       >    db  0, 0
+ 73+  057D 01 00       >    db  1, 0
+ 73+  057F 02 00       >    db  2, 0
+ 73+  0581 03 00       >    db  3, 0
+ 73+  0583 00 00       >    db  0, 0
+ 73+  0585 01 00       >    db  1, 0
+ 73+  0587 02 00       >    db  2, 0
+ 73+  0589 03 00       >    db  3, 0
+ 73+  058B 00 00       >    db  0, 0
+ 73+  058D 01 00       >    db  1, 0
+ 73+  058F 02 00       >    db  2, 0
+ 73+  0591 03 00       >    db  3, 0
+ 73+  0593 00 00       >    db  0, 0
+ 73+  0595 01 00       >    db  1, 0
+ 73+  0597 02 00       >    db  2, 0
+ 73+  0599 03 00       >    db  3, 0
+ 73+  059B 00 00       >    db  0, 0
+ 73+  059D 01 00       >    db  1, 0
+ 73+  059F 02 00       >    db  2, 0
+ 73+  05A1 03 00       >    db  3, 0
+ 73+  05A3 00 00       >    db  0, 0
+ 73+  05A5 01 00       >    db  1, 0
+ 73+  05A7 02 00       >    db  2, 0
+ 73+  05A9 03 00       >    db  3, 0
+ 74+  05AB                  TILEMAP_ROW     ; Row 15
+ 74+  05AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 74+  05AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 74+  05AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 74+  05B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 74+  05B3 00 00       >    db  0, 0
+ 74+  05B5 01 00       >    db  1, 0
+ 74+  05B7 02 00       >    db  2, 0
+ 74+  05B9 03 00       >    db  3, 0
+ 74+  05BB 00 00       >    db  0, 0
+ 74+  05BD 01 00       >    db  1, 0
+ 74+  05BF 02 00       >    db  2, 0
+ 74+  05C1 03 00       >    db  3, 0
+ 74+  05C3 00 00       >    db  0, 0
+ 74+  05C5 01 00       >    db  1, 0
+ 74+  05C7 02 00       >    db  2, 0
+ 74+  05C9 03 00       >    db  3, 0
+ 74+  05CB 00 00       >    db  0, 0
+ 74+  05CD 01 00       >    db  1, 0
+ 74+  05CF 02 00       >    db  2, 0
+ 74+  05D1 03 00       >    db  3, 0
+ 74+  05D3 00 00       >    db  0, 0
+ 74+  05D5 01 00       >    db  1, 0
+ 74+  05D7 02 00       >    db  2, 0
+ 74+  05D9 03 00       >    db  3, 0
+ 74+  05DB 00 00       >    db  0, 0
+ 74+  05DD 01 00       >    db  1, 0
+ 74+  05DF 02 00       >    db  2, 0
+ 74+  05E1 03 00       >    db  3, 0
+ 74+  05E3 00 00       >    db  0, 0
+ 74+  05E5 01 00       >    db  1, 0
+ 74+  05E7 02 00       >    db  2, 0
+ 74+  05E9 03 00       >    db  3, 0
+ 75+  05EB                  TILEMAP_ROW     ; Row 16
+ 75+  05EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 75+  05ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 75+  05EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 75+  05F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 75+  05F3 00 00       >    db  0, 0
+ 75+  05F5 01 00       >    db  1, 0
+ 75+  05F7 02 00       >    db  2, 0
+ 75+  05F9 03 00       >    db  3, 0
+ 75+  05FB 00 00       >    db  0, 0
+ 75+  05FD 01 00       >    db  1, 0
+ 75+  05FF 02 00       >    db  2, 0
+ 75+  0601 03 00       >    db  3, 0
+ 75+  0603 00 00       >    db  0, 0
+ 75+  0605 01 00       >    db  1, 0
+ 75+  0607 02 00       >    db  2, 0
+ 75+  0609 03 00       >    db  3, 0
+ 75+  060B 00 00       >    db  0, 0
+ 75+  060D 01 00       >    db  1, 0
+ 75+  060F 02 00       >    db  2, 0
+ 75+  0611 03 00       >    db  3, 0
+ 75+  0613 00 00       >    db  0, 0
+ 75+  0615 01 00       >    db  1, 0
+ 75+  0617 02 00       >    db  2, 0
+ 75+  0619 03 00       >    db  3, 0
+ 75+  061B 00 00       >    db  0, 0
+ 75+  061D 01 00       >    db  1, 0
+ 75+  061F 02 00       >    db  2, 0
+ 75+  0621 03 00       >    db  3, 0
+ 75+  0623 00 00       >    db  0, 0
+ 75+  0625 01 00       >    db  1, 0
+ 75+  0627 02 00       >    db  2, 0
+ 75+  0629 03 00       >    db  3, 0
+ 76+  062B                  TILEMAP_ROW     ; Row 17
+ 76+  062B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 76+  062D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 76+  062F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 76+  0631 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 76+  0633 00 00       >    db  0, 0
+ 76+  0635 01 00       >    db  1, 0
+ 76+  0637 02 00       >    db  2, 0
+ 76+  0639 03 00       >    db  3, 0
+ 76+  063B 00 00       >    db  0, 0
+ 76+  063D 01 00       >    db  1, 0
+ 76+  063F 02 00       >    db  2, 0
+ 76+  0641 03 00       >    db  3, 0
+ 76+  0643 00 00       >    db  0, 0
+ 76+  0645 01 00       >    db  1, 0
+ 76+  0647 02 00       >    db  2, 0
+ 76+  0649 03 00       >    db  3, 0
+ 76+  064B 00 00       >    db  0, 0
+ 76+  064D 01 00       >    db  1, 0
+ 76+  064F 02 00       >    db  2, 0
+ 76+  0651 03 00       >    db  3, 0
+ 76+  0653 00 00       >    db  0, 0
+ 76+  0655 01 00       >    db  1, 0
+ 76+  0657 02 00       >    db  2, 0
+ 76+  0659 03 00       >    db  3, 0
+ 76+  065B 00 00       >    db  0, 0
+ 76+  065D 01 00       >    db  1, 0
+ 76+  065F 02 00       >    db  2, 0
+ 76+  0661 03 00       >    db  3, 0
+ 76+  0663 00 00       >    db  0, 0
+ 76+  0665 01 00       >    db  1, 0
+ 76+  0667 02 00       >    db  2, 0
+ 76+  0669 03 00       >    db  3, 0
+ 77+  066B                  TILEMAP_ROW     ; Row 18
+ 77+  066B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 77+  066D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 77+  066F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 77+  0671 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 77+  0673 00 00       >    db  0, 0
+ 77+  0675 01 00       >    db  1, 0
+ 77+  0677 02 00       >    db  2, 0
+ 77+  0679 03 00       >    db  3, 0
+ 77+  067B 00 00       >    db  0, 0
+ 77+  067D 01 00       >    db  1, 0
+ 77+  067F 02 00       >    db  2, 0
+ 77+  0681 03 00       >    db  3, 0
+ 77+  0683 00 00       >    db  0, 0
+ 77+  0685 01 00       >    db  1, 0
+ 77+  0687 02 00       >    db  2, 0
+ 77+  0689 03 00       >    db  3, 0
+ 77+  068B 00 00       >    db  0, 0
+ 77+  068D 01 00       >    db  1, 0
+ 77+  068F 02 00       >    db  2, 0
+ 77+  0691 03 00       >    db  3, 0
+ 77+  0693 00 00       >    db  0, 0
+ 77+  0695 01 00       >    db  1, 0
+ 77+  0697 02 00       >    db  2, 0
+ 77+  0699 03 00       >    db  3, 0
+ 77+  069B 00 00       >    db  0, 0
+ 77+  069D 01 00       >    db  1, 0
+ 77+  069F 02 00       >    db  2, 0
+ 77+  06A1 03 00       >    db  3, 0
+ 77+  06A3 00 00       >    db  0, 0
+ 77+  06A5 01 00       >    db  1, 0
+ 77+  06A7 02 00       >    db  2, 0
+ 77+  06A9 03 00       >    db  3, 0
+ 78+  06AB                  TILEMAP_ROW     ; Row 19
+ 78+  06AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 78+  06AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 78+  06AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 78+  06B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 78+  06B3 00 00       >    db  0, 0
+ 78+  06B5 01 00       >    db  1, 0
+ 78+  06B7 02 00       >    db  2, 0
+ 78+  06B9 03 00       >    db  3, 0
+ 78+  06BB 00 00       >    db  0, 0
+ 78+  06BD 01 00       >    db  1, 0
+ 78+  06BF 02 00       >    db  2, 0
+ 78+  06C1 03 00       >    db  3, 0
+ 78+  06C3 00 00       >    db  0, 0
+ 78+  06C5 01 00       >    db  1, 0
+ 78+  06C7 02 00       >    db  2, 0
+ 78+  06C9 03 00       >    db  3, 0
+ 78+  06CB 00 00       >    db  0, 0
+ 78+  06CD 01 00       >    db  1, 0
+ 78+  06CF 02 00       >    db  2, 0
+ 78+  06D1 03 00       >    db  3, 0
+ 78+  06D3 00 00       >    db  0, 0
+ 78+  06D5 01 00       >    db  1, 0
+ 78+  06D7 02 00       >    db  2, 0
+ 78+  06D9 03 00       >    db  3, 0
+ 78+  06DB 00 00       >    db  0, 0
+ 78+  06DD 01 00       >    db  1, 0
+ 78+  06DF 02 00       >    db  2, 0
+ 78+  06E1 03 00       >    db  3, 0
+ 78+  06E3 00 00       >    db  0, 0
+ 78+  06E5 01 00       >    db  1, 0
+ 78+  06E7 02 00       >    db  2, 0
+ 78+  06E9 03 00       >    db  3, 0
+ 79+  06EB                  TILEMAP_ROW     ; Row 20
+ 79+  06EB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 79+  06ED 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 79+  06EF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 79+  06F1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 79+  06F3 00 00       >    db  0, 0
+ 79+  06F5 01 00       >    db  1, 0
+ 79+  06F7 02 00       >    db  2, 0
+ 79+  06F9 03 00       >    db  3, 0
+ 79+  06FB 00 00       >    db  0, 0
+ 79+  06FD 01 00       >    db  1, 0
+ 79+  06FF 02 00       >    db  2, 0
+ 79+  0701 03 00       >    db  3, 0
+ 79+  0703 00 00       >    db  0, 0
+ 79+  0705 01 00       >    db  1, 0
+ 79+  0707 02 00       >    db  2, 0
+ 79+  0709 03 00       >    db  3, 0
+ 79+  070B 00 00       >    db  0, 0
+ 79+  070D 01 00       >    db  1, 0
+ 79+  070F 02 00       >    db  2, 0
+ 79+  0711 03 00       >    db  3, 0
+ 79+  0713 00 00       >    db  0, 0
+ 79+  0715 01 00       >    db  1, 0
+ 79+  0717 02 00       >    db  2, 0
+ 79+  0719 03 00       >    db  3, 0
+ 79+  071B 00 00       >    db  0, 0
+ 79+  071D 01 00       >    db  1, 0
+ 79+  071F 02 00       >    db  2, 0
+ 79+  0721 03 00       >    db  3, 0
+ 79+  0723 00 00       >    db  0, 0
+ 79+  0725 01 00       >    db  1, 0
+ 79+  0727 02 00       >    db  2, 0
+ 79+  0729 03 00       >    db  3, 0
+ 80+  072B                  TILEMAP_ROW     ; Row 21
+ 80+  072B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 80+  072D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 80+  072F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 80+  0731 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 80+  0733 00 00       >    db  0, 0
+ 80+  0735 01 00       >    db  1, 0
+ 80+  0737 02 00       >    db  2, 0
+ 80+  0739 03 00       >    db  3, 0
+ 80+  073B 00 00       >    db  0, 0
+ 80+  073D 01 00       >    db  1, 0
+ 80+  073F 02 00       >    db  2, 0
+ 80+  0741 03 00       >    db  3, 0
+ 80+  0743 00 00       >    db  0, 0
+ 80+  0745 01 00       >    db  1, 0
+ 80+  0747 02 00       >    db  2, 0
+ 80+  0749 03 00       >    db  3, 0
+ 80+  074B 00 00       >    db  0, 0
+ 80+  074D 01 00       >    db  1, 0
+ 80+  074F 02 00       >    db  2, 0
+ 80+  0751 03 00       >    db  3, 0
+ 80+  0753 00 00       >    db  0, 0
+ 80+  0755 01 00       >    db  1, 0
+ 80+  0757 02 00       >    db  2, 0
+ 80+  0759 03 00       >    db  3, 0
+ 80+  075B 00 00       >    db  0, 0
+ 80+  075D 01 00       >    db  1, 0
+ 80+  075F 02 00       >    db  2, 0
+ 80+  0761 03 00       >    db  3, 0
+ 80+  0763 00 00       >    db  0, 0
+ 80+  0765 01 00       >    db  1, 0
+ 80+  0767 02 00       >    db  2, 0
+ 80+  0769 03 00       >    db  3, 0
+ 81+  076B                  TILEMAP_ROW     ; Row 22
+ 81+  076B 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 81+  076D 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 81+  076F 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 81+  0771 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 81+  0773 00 00       >    db  0, 0
+ 81+  0775 01 00       >    db  1, 0
+ 81+  0777 02 00       >    db  2, 0
+ 81+  0779 03 00       >    db  3, 0
+ 81+  077B 00 00       >    db  0, 0
+ 81+  077D 01 00       >    db  1, 0
+ 81+  077F 02 00       >    db  2, 0
+ 81+  0781 03 00       >    db  3, 0
+ 81+  0783 00 00       >    db  0, 0
+ 81+  0785 01 00       >    db  1, 0
+ 81+  0787 02 00       >    db  2, 0
+ 81+  0789 03 00       >    db  3, 0
+ 81+  078B 00 00       >    db  0, 0
+ 81+  078D 01 00       >    db  1, 0
+ 81+  078F 02 00       >    db  2, 0
+ 81+  0791 03 00       >    db  3, 0
+ 81+  0793 00 00       >    db  0, 0
+ 81+  0795 01 00       >    db  1, 0
+ 81+  0797 02 00       >    db  2, 0
+ 81+  0799 03 00       >    db  3, 0
+ 81+  079B 00 00       >    db  0, 0
+ 81+  079D 01 00       >    db  1, 0
+ 81+  079F 02 00       >    db  2, 0
+ 81+  07A1 03 00       >    db  3, 0
+ 81+  07A3 00 00       >    db  0, 0
+ 81+  07A5 01 00       >    db  1, 0
+ 81+  07A7 02 00       >    db  2, 0
+ 81+  07A9 03 00       >    db  3, 0
+ 82+  07AB                  TILEMAP_ROW     ; Row 23
+ 82+  07AB 00 00       >    db  0, 0    ; Tile 0, attrs 0
+ 82+  07AD 01 00       >    db  1, 0    ; Tile 1, attrs 0
+ 82+  07AF 02 00       >    db  2, 0    ; Tile 2, attrs 0
+ 82+  07B1 03 00       >    db  3, 0    ; Tile 3, attrs 0
+ 82+  07B3 00 00       >    db  0, 0
+ 82+  07B5 01 00       >    db  1, 0
+ 82+  07B7 02 00       >    db  2, 0
+ 82+  07B9 03 00       >    db  3, 0
+ 82+  07BB 00 00       >    db  0, 0
+ 82+  07BD 01 00       >    db  1, 0
+ 82+  07BF 02 00       >    db  2, 0
+ 82+  07C1 03 00       >    db  3, 0
+ 82+  07C3 00 00       >    db  0, 0
+ 82+  07C5 01 00       >    db  1, 0
+ 82+  07C7 02 00       >    db  2, 0
+ 82+  07C9 03 00       >    db  3, 0
+ 82+  07CB 00 00       >    db  0, 0
+ 82+  07CD 01 00       >    db  1, 0
+ 82+  07CF 02 00       >    db  2, 0
+ 82+  07D1 03 00       >    db  3, 0
+ 82+  07D3 00 00       >    db  0, 0
+ 82+  07D5 01 00       >    db  1, 0
+ 82+  07D7 02 00       >    db  2, 0
+ 82+  07D9 03 00       >    db  3, 0
+ 82+  07DB 00 00       >    db  0, 0
+ 82+  07DD 01 00       >    db  1, 0
+ 82+  07DF 02 00       >    db  2, 0
+ 82+  07E1 03 00       >    db  3, 0
+ 82+  07E3 00 00       >    db  0, 0
+ 82+  07E5 01 00       >    db  1, 0
+ 82+  07E7 02 00       >    db  2, 0
+ 82+  07E9 03 00       >    db  3, 0
+ 83+  07EB
+ 84+  07EB              TILEMAP_DATA_SIZE   equ     1536    ; 32 * 24 * 2 bytes
+ 85+  07EB
+# file closed: tilemap.inc
+308   07EB
+309   07EB              ; ==================================================================
+310   07EB              ; ROM SIZE PADDING (ensure binary is reasonable size)
+311   07EB              ; ==================================================================
+312   07EB                  ; Optional: Pad to specific size or add checksum
+313   07EB                  ; For now, just end naturally
+314   07EB
+315   07EB              ; ==================================================================
+316   07EB              ; END OF ROM
+317   07EB              ; ==================================================================
+318   07EB
+# file closed: diag_cart.asm

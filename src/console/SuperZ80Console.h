@@ -1,7 +1,9 @@
 #ifndef SUPERZ80_CONSOLE_SUPERZ80CONSOLE_H
 #define SUPERZ80_CONSOLE_SUPERZ80CONSOLE_H
 
-#include "cpu/Z80CpuStub.h"
+#include <memory>
+
+#include "cpu/Z80Cpu.h"
 #include "devices/apu/APU.h"
 #include "devices/bus/Bus.h"
 #include "devices/cart/Cartridge.h"
@@ -20,6 +22,9 @@ struct DebugState {
 
 class SuperZ80Console {
  public:
+  SuperZ80Console();
+  ~SuperZ80Console();
+
   bool PowerOn();
   void Reset();
   void StepFrame();
@@ -29,6 +34,11 @@ class SuperZ80Console {
 
   void SetHostButtons(const sz::input::HostButtons& buttons);
 
+  // Phase 9: ROM loading
+  bool LoadRom(const char* path);
+  bool IsRomLoaded() const;
+
+  // Debug state accessors
   sz::scheduler::DebugState GetSchedulerDebugState() const;
   sz::bus::DebugState GetBusDebugState() const;
   sz::irq::DebugState GetIRQDebugState() const;
@@ -43,8 +53,11 @@ class SuperZ80Console {
   std::vector<u8> GetPPUVramWindow(u16 start, size_t count) const;
   const sz::ppu::PPU& GetPPU() const { return ppu_; }
 
+  // Phase 9: Direct access to Bus for debug
+  const sz::bus::Bus& GetBus() const { return bus_; }
+
   // Scheduler hooks (called by Scheduler::StepOneScanline)
-  void OnScanlineStart(u16 scanline);  // Phase 4: synthetic IRQ trigger + PreCpuUpdate
+  void OnScanlineStart(u16 scanline);
   void ExecuteCpu(u32 tstates);
   void TickIRQ();
   void OnVisibleScanline(u16 scanline);
@@ -60,7 +73,10 @@ class SuperZ80Console {
   sz::apu::APU apu_{};
   sz::dma::DMAEngine dma_{};
   sz::input::InputController input_{};
-  sz::cpu::Z80CpuStub cpu_{};
+
+  // Phase 9: Real Z80 CPU (uses z80ex)
+  // Must be after bus_ since it takes a reference to bus_
+  std::unique_ptr<sz::cpu::Z80Cpu> cpu_;
 
   sz::ppu::Framebuffer framebuffer_{};
 };

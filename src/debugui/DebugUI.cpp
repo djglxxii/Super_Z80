@@ -98,6 +98,9 @@ void DebugUI::Draw(const sz::console::SuperZ80Console& console) {
   if (ImGui::CollapsingHeader("Input", ImGuiTreeNodeFlags_DefaultOpen)) {
     input_panel.Draw(console);
   }
+  if (ImGui::CollapsingHeader("Diagnostics (Phase 9)", ImGuiTreeNodeFlags_DefaultOpen)) {
+    diag_panel_.Draw(console);
+  }
 
   ImGui::End();
 }
