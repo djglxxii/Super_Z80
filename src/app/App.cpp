@@ -1,21 +1,12 @@
 #include "app/App.h"
 
-#include <algorithm>
-
 #include <SDL.h>
 
 #include "core/config.h"
 #include "core/log/Logger.h"
 #include "core/types.h"
-#include "core/util/Assert.h"
 
 namespace sz::app {
-
-namespace {
-constexpr u32 kBarColors[8] = {
-    0xFFFF0000u, 0xFFFF8000u, 0xFFFFFF00u, 0xFF00FF00u,
-    0xFF00FFFFu, 0xFF0000FFu, 0xFF8000FFu, 0xFFFFFFFFu};
-}
 
 App::App(const AppConfig& config) : config_(config) {
 }
@@ -65,9 +56,8 @@ int App::Run() {
     console_.SetHostButtons(input_.ReadButtons());
     console_.StepFrame();
 
-    auto& framebuffer = console_.GetFramebufferMutable();
-    FillTestPattern(framebuffer, console_.GetDebugState().frame);
-
+    // Phase 7: PPU now renders directly to framebuffer, just present it
+    const auto& framebuffer = console_.GetFramebuffer();
     presenter_.Present(sdl_, framebuffer);
 
 #if defined(SUPERZ80_ENABLE_IMGUI)
@@ -88,26 +78,6 @@ int App::Run() {
   sdl_.Shutdown();
   SDL_Quit();
   return 0;
-}
-
-void App::FillTestPattern(sz::ppu::Framebuffer& framebuffer, u64 frame) {
-  SZ_ASSERT(framebuffer.width == kScreenWidth);
-  SZ_ASSERT(framebuffer.height == kScreenHeight);
-  if (framebuffer.pixels.empty()) {
-    return;
-  }
-
-  const int bar_width = std::max(1, framebuffer.width / 8);
-  const int shift = static_cast<int>(frame % framebuffer.width);
-
-  for (int y = 0; y < framebuffer.height; ++y) {
-    for (int x = 0; x < framebuffer.width; ++x) {
-      int bar_index = std::min(7, x / bar_width);
-      u32 base = kBarColors[bar_index];
-      u32 checker = ((x + shift) ^ (y + static_cast<int>(frame))) & 0x10 ? 0xFF202020u : 0;
-      framebuffer.pixels[static_cast<size_t>(y * framebuffer.width + x)] = base ^ checker;
-    }
-  }
 }
 
 }  // namespace sz::app

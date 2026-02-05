@@ -16,20 +16,16 @@ void Bus::Write8(u16 /*addr*/, u8 /*value*/) {
 }
 
 u8 Bus::In8(u8 port) {
-  // Decode I/O ports for Phase 5
-  switch (port) {
-    case 0x10:  // VDP_STATUS (R) - Phase 5
-      if (ppu_) {
-        // Bit 0: VBLANK flag (live view of vblank_flag)
-        // Other bits: 0 for now (no sprites, no scanline compare, etc.)
-        u8 status = 0x00;
-        if (ppu_->GetVBlankFlag()) {
-          status |= 0x01;  // VBlank bit
-        }
-        return status;
-      }
-      return 0xFF;
+  // Phase 7: PPU I/O ports (0x10-0x1F)
+  if (port >= 0x10 && port <= 0x1F) {
+    if (ppu_) {
+      return ppu_->IoRead(port);
+    }
+    return 0xFF;
+  }
 
+  // Decode I/O ports
+  switch (port) {
     case 0x80:  // IRQ_STATUS (R)
       if (irq_) {
         return irq_->ReadStatus();
@@ -56,7 +52,15 @@ u8 Bus::In8(u8 port) {
 }
 
 void Bus::Out8(u8 port, u8 value) {
-  // Decode I/O ports for Phase 4
+  // Phase 7: PPU I/O ports (0x10-0x1F)
+  if (port >= 0x10 && port <= 0x1F) {
+    if (ppu_) {
+      ppu_->IoWrite(port, value);
+    }
+    return;
+  }
+
+  // Decode I/O ports
   switch (port) {
     case 0x81:  // IRQ_ENABLE (R/W)
       if (irq_) {

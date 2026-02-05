@@ -24,8 +24,6 @@ class App {
   int Run();
 
  private:
-  void FillTestPattern(sz::ppu::Framebuffer& framebuffer, u64 frame);
-
   AppConfig config_{};
   SDLHost sdl_{};
   VideoPresenter presenter_{};

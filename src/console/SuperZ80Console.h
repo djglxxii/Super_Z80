@@ -39,6 +39,10 @@ class SuperZ80Console {
   sz::input::DebugState GetInputDebugState() const;
   sz::cpu::DebugState GetCpuDebugState() const;
 
+  // Phase 7: PPU debug access
+  std::vector<u8> GetPPUVramWindow(u16 start, size_t count) const;
+  const sz::ppu::PPU& GetPPU() const { return ppu_; }
+
   // Scheduler hooks (called by Scheduler::StepOneScanline)
   void OnScanlineStart(u16 scanline);  // Phase 4: synthetic IRQ trigger + PreCpuUpdate
   void ExecuteCpu(u32 tstates);

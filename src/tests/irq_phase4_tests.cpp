@@ -1,9 +1,8 @@
 // Phase 4 IRQ Infrastructure Tests
-// Validates IRQController, I/O ports, synthetic trigger, and /INT line behavior
+// Validates IRQController, I/O ports, and /INT line behavior
 
 #include <cassert>
 #include <cstdio>
-#include "console/SuperZ80Console.h"
 #include "devices/irq/IRQController.h"
 #include "core/log/Logger.h"
 
@@ -76,46 +75,6 @@ void TestIRQMaskingBehavior() {
     printf("Test 2 PASSED\n\n");
 }
 
-void TestSyntheticIRQTrigger() {
-    printf("=== Test 3: Synthetic IRQ Trigger ===\n");
-
-    console::SuperZ80Console console;
-    console.PowerOn();
-    console.Reset();
-
-    auto irq_state = console.GetIRQDebugState();
-    assert(irq_state.synthetic_fire_count == 0);
-    assert(irq_state.pending == 0);
-    printf("✓ Initial state: no synthetic fires, no pending\n");
-
-    // Run to scanline 10 (synthetic trigger fires here)
-    for (int i = 0; i < 10; ++i) {
-        auto sched_state = console.GetSchedulerDebugState();
-        if (sched_state.current_scanline == 10) {
-            break;
-        }
-        console.StepFrame();
-    }
-
-    // Step one more frame to ensure scanline 10 is reached
-    console.StepFrame();
-
-    irq_state = console.GetIRQDebugState();
-    assert(irq_state.synthetic_fire_count >= 1);
-    // Note: pending will be 0x02 if enabled, or latched regardless
-    printf("✓ Synthetic TIMER IRQ fired at scanline 10, count=%llu\n",
-           static_cast<unsigned long long>(irq_state.synthetic_fire_count));
-
-    // Verify once-per-frame trigger
-    u64 fire_count_before = irq_state.synthetic_fire_count;
-    console.StepFrame();
-    irq_state = console.GetIRQDebugState();
-    assert(irq_state.synthetic_fire_count == fire_count_before + 1);
-    printf("✓ Synthetic trigger fires once per frame\n");
-
-    printf("Test 3 PASSED\n\n");
-}
-
 void TestIOPortSemantics() {
     printf("=== Test 4: I/O Port Semantics ===\n");
 
@@ -184,7 +143,6 @@ int main() {
 
     TestIRQControllerBasics();
     TestIRQMaskingBehavior();
-    TestSyntheticIRQTrigger();
     TestIOPortSemantics();
     TestImmediateDrop();
 

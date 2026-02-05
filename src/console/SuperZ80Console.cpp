@@ -50,8 +50,8 @@ void SuperZ80Console::StepFrame() {
 
 // Scheduler hook implementations (called by Scheduler::StepOneScanline)
 void SuperZ80Console::OnScanlineStart(u16 scanline) {
-  // Phase 5: Call PPU's OnScanlineStart to handle VBlank flag transitions
-  ppu_.OnScanlineStart(scanline);
+  // Phase 7: Call PPU's BeginScanline to latch registers and handle VBlank flag
+  ppu_.BeginScanline(static_cast<int>(scanline));
 
   // Phase 5: Replace synthetic IRQ with real VBlank IRQ at scanline 192
   if (scanline == kVBlankStartScanline) {
@@ -152,6 +152,10 @@ sz::input::DebugState SuperZ80Console::GetInputDebugState() const {
 
 sz::cpu::DebugState SuperZ80Console::GetCpuDebugState() const {
   return cpu_.GetDebugState();
+}
+
+std::vector<u8> SuperZ80Console::GetPPUVramWindow(u16 start, size_t count) const {
+  return ppu_.VramReadWindow(start, count);
 }
 
 }  // namespace sz::console
