@@ -2,6 +2,7 @@
 #define SUPERZ80_APP_APP_H
 
 #include "app/InputHost.h"
+#include "app/SDLAudioDevice.h"
 #include "app/SDLHost.h"
 #include "app/TimeSource.h"
 #include "app/VideoPresenter.h"
@@ -27,6 +28,7 @@ class App {
  private:
   AppConfig config_{};
   SDLHost sdl_{};
+  SDLAudioDevice audio_{};
   VideoPresenter presenter_{};
   InputHost input_{};
   TimeSource time_{};

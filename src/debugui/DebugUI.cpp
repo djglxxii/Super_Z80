@@ -54,7 +54,7 @@ void DebugUI::BeginFrame() {
   ImGui::NewFrame();
 }
 
-void DebugUI::Draw(const sz::console::SuperZ80Console& console) {
+void DebugUI::Draw(sz::console::SuperZ80Console& console) {
   if (!initialized_) {
     return;
   }

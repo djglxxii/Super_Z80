@@ -14,7 +14,7 @@ class DebugUI {
   void Shutdown();
   void ProcessEvent(const SDL_Event* event);
   void BeginFrame();
-  void Draw(const sz::console::SuperZ80Console& console);
+  void Draw(sz::console::SuperZ80Console& console);
   void EndFrame();
 
  private:

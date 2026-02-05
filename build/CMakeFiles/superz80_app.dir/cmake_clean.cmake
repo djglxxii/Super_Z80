@@ -4,6 +4,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/superz80_app.dir/src/app/App.cpp.o.d"
   "CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o"
   "CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o.d"
+  "CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o"
+  "CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o.d"
   "CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o"
   "CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o.d"
   "CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o"

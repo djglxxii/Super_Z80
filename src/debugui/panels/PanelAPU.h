@@ -7,7 +7,12 @@ namespace sz::debugui {
 
 class PanelAPU {
  public:
-  void Draw(const sz::console::SuperZ80Console& console);
+  void Draw(sz::console::SuperZ80Console& console);
+
+ private:
+  bool psg_muted_ = false;
+  bool opm_muted_ = false;
+  bool pcm_muted_ = false;
 };
 
 }  // namespace sz::debugui

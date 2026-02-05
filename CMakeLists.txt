@@ -35,6 +35,10 @@ set(SUPERZ80_CORE_SOURCES
   src/cpu/Z80CpuStub.cpp
   src/cpu/Z80Cpu.cpp
   src/devices/apu/APU.cpp
+  src/devices/apu/AudioRingBuffer.cpp
+  src/devices/apu/SN76489_PSG.cpp
+  src/devices/apu/YM2151_OPM.cpp
+  src/devices/apu/PCM2Ch.cpp
   src/devices/bus/Bus.cpp
   src/devices/cart/Cartridge.cpp
   src/devices/dma/DMAEngine.cpp
@@ -77,6 +81,7 @@ set(SUPERZ80_APP_SOURCES
   src/main.cpp
   src/app/App.cpp
   src/app/InputHost.cpp
+  src/app/SDLAudioDevice.cpp
   src/app/SDLHost.cpp
   src/app/TimeSource.cpp
   src/app/VideoPresenter.cpp

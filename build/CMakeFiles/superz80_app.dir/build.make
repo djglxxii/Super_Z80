@@ -114,10 +114,24 @@ CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/djglxxii/src/Super_Z80/src/app/InputHost.cpp -o CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.s
 
+CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o: CMakeFiles/superz80_app.dir/flags.make
+CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o: /home/djglxxii/src/Super_Z80/src/app/SDLAudioDevice.cpp
+CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o -MF CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o.d -o CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o -c /home/djglxxii/src/Super_Z80/src/app/SDLAudioDevice.cpp
+
+CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/djglxxii/src/Super_Z80/src/app/SDLAudioDevice.cpp > CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.i
+
+CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/djglxxii/src/Super_Z80/src/app/SDLAudioDevice.cpp -o CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.s
+
 CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o: /home/djglxxii/src/Super_Z80/src/app/SDLHost.cpp
 CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building CXX object CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o -MF CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o.d -o CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o -c /home/djglxxii/src/Super_Z80/src/app/SDLHost.cpp
 
 CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.i: cmake_force
@@ -131,7 +145,7 @@ CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o: /home/djglxxii/src/Super_Z80/src/app/TimeSource.cpp
 CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Building CXX object CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o -MF CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o.d -o CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o -c /home/djglxxii/src/Super_Z80/src/app/TimeSource.cpp
 
 CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.i: cmake_force
@@ -145,7 +159,7 @@ CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o: /home/djglxxii/src/Super_Z80/src/app/VideoPresenter.cpp
 CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_6) "Building CXX object CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o -MF CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o.d -o CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o -c /home/djglxxii/src/Super_Z80/src/app/VideoPresenter.cpp
 
 CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.i: cmake_force
@@ -159,7 +173,7 @@ CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/DebugUI.cpp
 CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_7) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/DebugUI.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.i: cmake_force
@@ -173,7 +187,7 @@ CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelAPU.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_8) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelAPU.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.i: cmake_force
@@ -187,7 +201,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelBus.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_9) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelBus.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.i: cmake_force
@@ -201,7 +215,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCPU.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_10) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCPU.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.i: cmake_force
@@ -215,7 +229,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCartridge.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_11) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCartridge.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.i: cmake_force
@@ -229,7 +243,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDMA.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDMA.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.i: cmake_force
@@ -243,7 +257,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelIRQ.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelIRQ.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.i: cmake_force
@@ -257,7 +271,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelInput.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelInput.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.i: cmake_force
@@ -271,7 +285,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelPPU.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelPPU.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.i: cmake_force
@@ -285,7 +299,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelScheduler.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelScheduler.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.i: cmake_force
@@ -299,7 +313,7 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.s: cmake_force
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o: CMakeFiles/superz80_app.dir/flags.make
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o: /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDiagnostics.cpp
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o: CMakeFiles/superz80_app.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o -MF CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o.d -o CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o -c /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDiagnostics.cpp
 
 CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.i: cmake_force
@@ -315,6 +329,7 @@ superz80_app_OBJECTS = \
 "CMakeFiles/superz80_app.dir/src/main.cpp.o" \
 "CMakeFiles/superz80_app.dir/src/app/App.cpp.o" \
 "CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o" \
+"CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o" \
 "CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o" \
 "CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o" \
 "CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o" \
@@ -336,6 +351,7 @@ superz80_app_EXTERNAL_OBJECTS =
 superz80_app: CMakeFiles/superz80_app.dir/src/main.cpp.o
 superz80_app: CMakeFiles/superz80_app.dir/src/app/App.cpp.o
 superz80_app: CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o
+superz80_app: CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o
 superz80_app: CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o
 superz80_app: CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o
 superz80_app: CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o
@@ -357,7 +373,7 @@ superz80_app: /usr/lib/libSDL2main.a
 superz80_app: libimgui.a
 superz80_app: /usr/lib/libSDL2-2.0.so.0.3200.62
 superz80_app: CMakeFiles/superz80_app.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Linking CXX executable superz80_app"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Linking CXX executable superz80_app"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/superz80_app.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.

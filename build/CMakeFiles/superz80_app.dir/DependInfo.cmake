@@ -10,6 +10,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "/home/djglxxii/src/Super_Z80/src/app/App.cpp" "CMakeFiles/superz80_app.dir/src/app/App.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/App.cpp.o.d"
   "/home/djglxxii/src/Super_Z80/src/app/InputHost.cpp" "CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o.d"
+  "/home/djglxxii/src/Super_Z80/src/app/SDLAudioDevice.cpp" "CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o.d"
   "/home/djglxxii/src/Super_Z80/src/app/SDLHost.cpp" "CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/SDLHost.cpp.o.d"
   "/home/djglxxii/src/Super_Z80/src/app/TimeSource.cpp" "CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o.d"
   "/home/djglxxii/src/Super_Z80/src/app/VideoPresenter.cpp" "CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o" "gcc" "CMakeFiles/superz80_app.dir/src/app/VideoPresenter.cpp.o.d"

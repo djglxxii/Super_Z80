@@ -19,6 +19,10 @@ namespace sz::dma {
 class DMAEngine;
 }
 
+namespace sz::apu {
+class APU;
+}
+
 namespace sz::bus {
 
 struct DebugState {
@@ -68,10 +72,17 @@ class Bus {
   // Phase 6: Wire DMAEngine for DMA I/O port access
   void SetDMAEngine(sz::dma::DMAEngine* dma) { dma_ = dma; }
 
+  // Phase 12: Wire APU for audio I/O port access
+  void SetAPU(sz::apu::APU* apu) { apu_ = apu; }
+
+  // Phase 12: ROM data access (for PCM samples)
+  const std::vector<u8>& GetRomData() const { return rom_; }
+
  private:
   sz::irq::IRQController* irq_ = nullptr;
   sz::ppu::PPU* ppu_ = nullptr;
   sz::dma::DMAEngine* dma_ = nullptr;
+  sz::apu::APU* apu_ = nullptr;
 
   // Phase 9: Memory
   std::vector<u8> rom_;                       // ROM (up to 32KB)

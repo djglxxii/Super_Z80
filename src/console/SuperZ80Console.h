@@ -56,6 +56,10 @@ class SuperZ80Console {
   // Phase 9: Direct access to Bus for debug
   const sz::bus::Bus& GetBus() const { return bus_; }
 
+  // Phase 12: Access APU for SDL audio device binding
+  sz::apu::APU& GetAPU() { return apu_; }
+  const sz::apu::APU& GetAPU() const { return apu_; }
+
   // Scheduler hooks (called by Scheduler::StepOneScanline)
   void OnScanlineStart(u16 scanline);
   void ExecuteCpu(u32 tstates);

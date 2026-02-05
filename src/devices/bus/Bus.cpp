@@ -1,4 +1,5 @@
 #include "devices/bus/Bus.h"
+#include "devices/apu/APU.h"
 #include "devices/dma/DMAEngine.h"
 #include "devices/irq/IRQController.h"
 #include "devices/ppu/PPU.h"
@@ -135,6 +136,13 @@ u8 Bus::In8(u8 port) {
         }
         return 0xFF;
       }
+      // Phase 12: APU I/O ports (0x60-0x7D)
+      if (port >= 0x60 && port <= 0x7D) {
+        if (apu_) {
+          return apu_->IO_Read(port);
+        }
+        return 0xFF;
+      }
       // All other ports return 0xFF (stubbed/unmapped)
       return 0xFF;
   }
@@ -173,6 +181,13 @@ void Bus::Out8(u8 port, u8 value) {
       if (port >= 0x30 && port <= 0x36) {
         if (dma_) {
           dma_->WriteReg(port, value);
+        }
+        return;
+      }
+      // Phase 12: APU I/O ports (0x60-0x7D)
+      if (port >= 0x60 && port <= 0x7D) {
+        if (apu_) {
+          apu_->IO_Write(port, value, 0);
         }
         return;
       }

@@ -31,6 +31,9 @@ bool SuperZ80Console::PowerOn() {
   // Phase 6: Wire DMAEngine to Bus for DMA I/O port access
   bus_.SetDMAEngine(&dma_);
 
+  // Phase 12: Wire APU to Bus for audio I/O port access
+  bus_.SetAPU(&apu_);
+
   // Phase 9: Create real Z80 CPU (must be after bus_ is set up)
   cpu_ = std::make_unique<sz::cpu::Z80Cpu>(bus_);
 
@@ -54,6 +57,11 @@ void SuperZ80Console::Reset() {
 bool SuperZ80Console::LoadRom(const char* path) {
   if (!bus_.LoadRomFromFile(path)) {
     return false;
+  }
+  // Phase 12: Attach ROM data to APU for PCM sample access
+  const auto& rom = bus_.GetRomData();
+  if (!rom.empty()) {
+    apu_.AttachCartridgeROM(rom.data(), rom.size());
   }
   SZ_LOG_INFO("SuperZ80Console: ROM loaded from '%s'", path);
   return true;
@@ -125,8 +133,8 @@ void SuperZ80Console::TickDMA() {
 }
 
 void SuperZ80Console::TickAPU(u32 cycles) {
-  // Phase 3: APU stub (no-op)
-  apu_.Tick(cycles);
+  // Phase 12: APU advances by cycle budget (generates audio samples)
+  apu_.Advance(cycles);
 }
 
 const sz::ppu::Framebuffer& SuperZ80Console::GetFramebuffer() const {
