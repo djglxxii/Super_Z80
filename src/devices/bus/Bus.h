@@ -59,6 +59,9 @@ class Bus {
   // Wire IRQController for I/O port access
   void SetIRQController(sz::irq::IRQController* irq) { irq_ = irq; }
 
+  // Query current /INT line state from IRQController (for CPU to poll after I/O)
+  bool GetIntLine() const;
+
   // Phase 5: Wire PPU for VDP_STATUS port access
   void SetPPU(sz::ppu::PPU* ppu) { ppu_ = ppu; }
 

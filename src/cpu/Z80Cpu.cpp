@@ -129,6 +129,11 @@ u32 Z80Cpu::Step(u32 tstates_budget) {
     consumed += instr_tstates;
     RefreshDebugRegs();
 
+    // Poll /INT state from Bus after each instruction
+    // This ensures IRQ ACK (via OUT instruction) immediately updates our view
+    int_line_ = bus_.GetIntLine();
+    dbg_.int_line = int_line_;
+
     if (consumed >= tstates_budget) {
       break;
     }

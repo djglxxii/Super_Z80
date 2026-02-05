@@ -190,4 +190,11 @@ DebugState Bus::GetDebugState() const {
   return state;
 }
 
+bool Bus::GetIntLine() const {
+  if (irq_) {
+    return irq_->IntLineAsserted();
+  }
+  return false;
+}
+
 }  // namespace sz::bus
