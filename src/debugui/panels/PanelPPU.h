@@ -27,6 +27,9 @@ class PanelPPU {
   // Palette viewer state (Phase 8)
   bool palette_show_staged_ = false;  // false = active, true = staged
   int palette_swatch_scale_ = 2;
+
+  // Phase 10: Tilemap viewer state
+  int tilemap_plane_select_ = 0;      // 0 = Plane A, 1 = Plane B
 };
 
 }  // namespace sz::debugui

@@ -10,7 +10,7 @@ void PanelPPU::Draw(const sz::console::SuperZ80Console& console) {
   auto state = console.GetPPUDebugState();
 
   // Status section
-  ImGui::Text("Phase 8: PPU Plane A + Palette RAM");
+  ImGui::Text("Phase 10: PPU Dual Plane (A + B) + Palette RAM");
   ImGui::Separator();
 
   // VBlank status
@@ -71,6 +71,14 @@ void PanelPPU::DrawRegistersPanel(const sz::ppu::DebugState& state) {
   ImGui::Text("%s", (state.active_regs.vdp_ctrl & 0x01) ? "ON" : "OFF");
   ImGui::NextColumn();
 
+  // Phase 10: Plane B enable decoded
+  ImGui::Text("  Plane B En");
+  ImGui::NextColumn();
+  ImGui::Text("%s", (state.pending_regs.vdp_ctrl & 0x02) ? "ON" : "OFF");
+  ImGui::NextColumn();
+  ImGui::Text("%s", (state.active_regs.vdp_ctrl & 0x02) ? "ON" : "OFF");
+  ImGui::NextColumn();
+
   // Scroll X (0x12)
   ImGui::Text("Scroll X (0x12)");
   ImGui::NextColumn();
@@ -87,6 +95,22 @@ void PanelPPU::DrawRegistersPanel(const sz::ppu::DebugState& state) {
   ImGui::Text("%d", state.active_regs.scroll_y);
   ImGui::NextColumn();
 
+  // Phase 10: Plane B Scroll X (0x14)
+  ImGui::Text("B Scroll X (0x14)");
+  ImGui::NextColumn();
+  ImGui::Text("%d", state.pending_regs.plane_b_scroll_x);
+  ImGui::NextColumn();
+  ImGui::Text("%d", state.active_regs.plane_b_scroll_x);
+  ImGui::NextColumn();
+
+  // Phase 10: Plane B Scroll Y (0x15)
+  ImGui::Text("B Scroll Y (0x15)");
+  ImGui::NextColumn();
+  ImGui::Text("%d", state.pending_regs.plane_b_scroll_y);
+  ImGui::NextColumn();
+  ImGui::Text("%d", state.active_regs.plane_b_scroll_y);
+  ImGui::NextColumn();
+
   // Plane A Base (0x16)
   ImGui::Text("PlaneA Base (0x16)");
   ImGui::NextColumn();
@@ -95,6 +119,16 @@ void PanelPPU::DrawRegistersPanel(const sz::ppu::DebugState& state) {
   ImGui::NextColumn();
   ImGui::Text("%d (0x%04X)", state.active_regs.plane_a_base,
               state.active_regs.plane_a_base * 1024);
+  ImGui::NextColumn();
+
+  // Phase 10: Plane B Base (0x17)
+  ImGui::Text("PlaneB Base (0x17)");
+  ImGui::NextColumn();
+  ImGui::Text("%d (0x%04X)", state.pending_regs.plane_b_base,
+              state.pending_regs.plane_b_base * 1024);
+  ImGui::NextColumn();
+  ImGui::Text("%d (0x%04X)", state.active_regs.plane_b_base,
+              state.active_regs.plane_b_base * 1024);
   ImGui::NextColumn();
 
   // Pattern Base (0x18)
@@ -118,8 +152,13 @@ void PanelPPU::DrawVramViewer(const sz::console::SuperZ80Console& console) {
     vram_view_address_ = state.active_regs.pattern_base * 1024;
   }
   ImGui::SameLine();
-  if (ImGui::Button("Tilemap Base")) {
+  if (ImGui::Button("Plane A Map")) {
     vram_view_address_ = state.active_regs.plane_a_base * 1024;
+  }
+  ImGui::SameLine();
+  // Phase 10: Plane B tilemap quick-jump
+  if (ImGui::Button("Plane B Map")) {
+    vram_view_address_ = state.active_regs.plane_b_base * 1024;
   }
   ImGui::SameLine();
   if (ImGui::Button("Start")) {

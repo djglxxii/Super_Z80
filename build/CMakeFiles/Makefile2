@@ -161,8 +161,8 @@ CMakeFiles/imgui.dir/clean:
 # Target rules for target CMakeFiles/superz80_app.dir
 
 # All Build rule for target.
-CMakeFiles/superz80_app.dir/all: CMakeFiles/imgui.dir/all
 CMakeFiles/superz80_app.dir/all: CMakeFiles/superz80_core.dir/all
+CMakeFiles/superz80_app.dir/all: CMakeFiles/imgui.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_app.dir/build.make CMakeFiles/superz80_app.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_app.dir/build.make CMakeFiles/superz80_app.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31 "Built target superz80_app"

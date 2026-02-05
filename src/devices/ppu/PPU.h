@@ -16,13 +16,20 @@ struct Framebuffer {
   int height = kScreenHeight;
 };
 
-// Phase 7: PPU register set (active and pending copies)
+// Phase 7/10: PPU register set (active and pending copies)
+// VDP_CTRL bit layout:
+//   bit 0 = display enable (global)
+//   bit 1 = Plane B enable (Phase 10)
+// Plane A is implicitly enabled when display is enabled (backward compatible)
 struct PpuRegs {
-  u8 vdp_ctrl = 0;       // 0x11: bit 0 = display enable
-  u8 scroll_x = 0;       // 0x12: Plane A fine scroll X (pixels)
-  u8 scroll_y = 0;       // 0x13: Plane A fine scroll Y (pixels)
-  u8 plane_a_base = 0;   // 0x16: Tilemap base selector (VRAM page index, *1024)
-  u8 pattern_base = 0;   // 0x18: Pattern base selector (VRAM page index, *1024)
+  u8 vdp_ctrl = 0;         // 0x11: bit 0 = display enable, bit 1 = Plane B enable
+  u8 scroll_x = 0;         // 0x12: Plane A fine scroll X (pixels)
+  u8 scroll_y = 0;         // 0x13: Plane A fine scroll Y (pixels)
+  u8 plane_b_scroll_x = 0; // 0x14: Plane B fine scroll X (pixels) [Phase 10]
+  u8 plane_b_scroll_y = 0; // 0x15: Plane B fine scroll Y (pixels) [Phase 10]
+  u8 plane_a_base = 0;     // 0x16: Plane A tilemap base selector (VRAM page index, *1024)
+  u8 plane_b_base = 0;     // 0x17: Plane B tilemap base selector (VRAM page index, *1024) [Phase 10]
+  u8 pattern_base = 0;     // 0x18: Pattern base selector (shared by both planes, *1024)
 };
 
 // Phase 8: Palette debug tracking
@@ -106,9 +113,15 @@ class PPU {
   // Returns palette index (0-15) for pixel (x, y) within tile
   u8 DecodeTilePixel(u16 tile_index, int x_in_tile, int y_in_tile) const;
 
-  // Phase 7: Tilemap entry fetch (16-bit little-endian)
-  // Returns tile index (bits 0-9); ignores flip/priority for Phase 7
-  u16 FetchTilemapEntry(int tile_x, int tile_y) const;
+  // Phase 7/10: Tilemap entry fetch (16-bit little-endian)
+  // Returns tile index (bits 0-9); ignores flip/priority for Phase 7/10
+  // tilemap_base: VRAM page index (*1024 to get address)
+  u16 FetchTilemapEntry(int tile_x, int tile_y, u8 tilemap_base) const;
+
+  // Phase 10: Render one scanline of a tile plane into palette index buffer
+  // Parameterized for use with both Plane A and Plane B
+  void RenderTilePlaneScanline(int scanline, u8 scroll_x, u8 scroll_y,
+                               u8 tilemap_base, std::array<u8, 256>& out_line) const;
 
   // Phase 8: Map palette index to ARGB8888 color using active palette
   u32 PaletteToArgb(u8 palette_index) const;
@@ -155,6 +168,11 @@ class PPU {
 
   // Phase 8: Current frame number (for debug tracking)
   u64 current_frame_ = 0;
+
+  // Phase 10: Scanline buffers for dual-plane compositing
+  // Stores palette indices (0-127) before final palette lookup
+  mutable std::array<u8, 256> line_plane_a_{};
+  mutable std::array<u8, 256> line_plane_b_{};
 };
 
 }  // namespace sz::ppu

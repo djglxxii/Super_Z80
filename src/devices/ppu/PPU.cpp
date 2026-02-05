@@ -28,13 +28,17 @@ void PPU::Reset() {
   // This provides visible output without needing a ROM
   InitTestPattern();
 
-  // Phase 7: Set up registers for display
-  // Pattern base = page 0 (0x0000), Tilemap base = page 4 (0x1000)
+  // Phase 7/10: Set up registers for display
+  // Pattern base = page 0 (0x0000), Plane A tilemap base = page 4 (0x1000)
   pending_regs_.pattern_base = 0;
   pending_regs_.plane_a_base = 4;
   pending_regs_.scroll_x = 0;
   pending_regs_.scroll_y = 0;
-  pending_regs_.vdp_ctrl = 0x01;  // Display enabled
+  // Phase 10: Plane B defaults (disabled, separate tilemap base)
+  pending_regs_.plane_b_base = 8;        // Page 8 (0x2000) - distinct from Plane A
+  pending_regs_.plane_b_scroll_x = 0;
+  pending_regs_.plane_b_scroll_y = 0;
+  pending_regs_.vdp_ctrl = 0x01;         // Display enabled, Plane B disabled (bit 1 = 0)
   active_regs_ = pending_regs_;
 }
 
@@ -157,8 +161,17 @@ u8 PPU::IoRead(u8 port) {
     case 0x13:  // PLANE_A_SCROLL_Y (R)
       return pending_regs_.scroll_y;
 
+    case 0x14:  // PLANE_B_SCROLL_X (R) [Phase 10]
+      return pending_regs_.plane_b_scroll_x;
+
+    case 0x15:  // PLANE_B_SCROLL_Y (R) [Phase 10]
+      return pending_regs_.plane_b_scroll_y;
+
     case 0x16:  // PLANE_A_BASE (R)
       return pending_regs_.plane_a_base;
+
+    case 0x17:  // PLANE_B_BASE (R) [Phase 10]
+      return pending_regs_.plane_b_base;
 
     case 0x18:  // PATTERN_BASE (R)
       return pending_regs_.pattern_base;
@@ -206,8 +219,20 @@ void PPU::IoWrite(u8 port, u8 value) {
       pending_regs_.scroll_y = value;
       break;
 
+    case 0x14:  // PLANE_B_SCROLL_X (W) [Phase 10]
+      pending_regs_.plane_b_scroll_x = value;
+      break;
+
+    case 0x15:  // PLANE_B_SCROLL_Y (W) [Phase 10]
+      pending_regs_.plane_b_scroll_y = value;
+      break;
+
     case 0x16:  // PLANE_A_BASE (W)
       pending_regs_.plane_a_base = value;
+      break;
+
+    case 0x17:  // PLANE_B_BASE (W) [Phase 10]
+      pending_regs_.plane_b_base = value;
       break;
 
     case 0x18:  // PATTERN_BASE (W)
@@ -302,6 +327,8 @@ void PPU::RenderScanline(int scanline, Framebuffer& fb) {
 
   // Check display enable (bit 0 of VDP_CTRL)
   const bool display_enable = (active_regs_.vdp_ctrl & 0x01) != 0;
+  // Phase 10: Check Plane B enable (bit 1 of VDP_CTRL)
+  const bool plane_b_enable = (active_regs_.vdp_ctrl & 0x02) != 0;
 
   // Calculate framebuffer row offset
   const size_t row_offset = static_cast<size_t>(scanline * kScreenWidth);
@@ -315,32 +342,39 @@ void PPU::RenderScanline(int scanline, Framebuffer& fb) {
     return;
   }
 
-  // Phase 7: Render Plane A
-  const int scroll_x = active_regs_.scroll_x;
-  const int scroll_y = active_regs_.scroll_y;
+  // Phase 10: Dual-plane rendering with compositing
+  // Step 1: Render Plane B (background) into line buffer if enabled
+  if (plane_b_enable) {
+    RenderTilePlaneScanline(scanline,
+                            active_regs_.plane_b_scroll_x,
+                            active_regs_.plane_b_scroll_y,
+                            active_regs_.plane_b_base,
+                            line_plane_b_);
+  } else {
+    // Plane B disabled: fill with transparent (palette index 0)
+    line_plane_b_.fill(0);
+  }
 
-  // Compute scrolled Y coordinate (wrap at 192 for Phase 7)
-  const int global_y = (scanline + scroll_y) % kScreenHeight;
-  const int tile_y = global_y / 8;
-  const int y_in_tile = global_y % 8;
+  // Step 2: Render Plane A (foreground) into line buffer
+  // Plane A is always enabled when display is enabled (backward compatibility)
+  RenderTilePlaneScanline(scanline,
+                          active_regs_.scroll_x,
+                          active_regs_.scroll_y,
+                          active_regs_.plane_a_base,
+                          line_plane_a_);
 
+  // Step 3: Composite planes (Plane A in front, Plane B behind)
+  // Phase 10 priority rule: palette index 0 is transparent
+  // If Plane A pixel is non-zero, it wins. Otherwise Plane B shows through.
   for (int x = 0; x < kScreenWidth; ++x) {
-    // Compute scrolled X coordinate (wrap at 256)
-    const int global_x = (x + scroll_x) % kScreenWidth;
-    const int tile_x = global_x / 8;
-    const int x_in_tile = global_x % 8;
+    const u8 pixel_a = line_plane_a_[static_cast<size_t>(x)];
+    const u8 pixel_b = line_plane_b_[static_cast<size_t>(x)];
 
-    // Fetch tilemap entry and get tile index
-    const u16 tile_index = FetchTilemapEntry(tile_x, tile_y);
+    // Compositing: A wins if non-transparent, otherwise B
+    const u8 final_index = (pixel_a != 0) ? pixel_a : pixel_b;
 
-    // Decode tile pixel to get palette index (0-15)
-    const u8 palette_index = DecodeTilePixel(tile_index, x_in_tile, y_in_tile);
-
-    // Map palette index to ARGB8888 color
-    const u32 color = PaletteToArgb(palette_index);
-
-    // Store in framebuffer
-    fb.pixels[row_offset + static_cast<size_t>(x)] = color;
+    // Map palette index to ARGB8888 color and store in framebuffer
+    fb.pixels[row_offset + static_cast<size_t>(x)] = PaletteToArgb(final_index);
   }
 }
 
@@ -373,18 +407,16 @@ u8 PPU::DecodeTilePixel(u16 tile_index, int x_in_tile, int y_in_tile) const {
   }
 }
 
-u16 PPU::FetchTilemapEntry(int tile_x, int tile_y) const {
-  // Phase 7: 16-bit tilemap entries (little-endian)
+u16 PPU::FetchTilemapEntry(int tile_x, int tile_y, u8 tilemap_base) const {
+  // Phase 7/10: 16-bit tilemap entries (little-endian)
   // - Tilemap is 32x24 tiles
   // - Entry address = tilemap_base * 1024 + (tile_y * 32 + tile_x) * 2
   // - Bits 0-9: tile index (0-1023)
-  // - Bits 10-12: palette select (ignored in Phase 7)
-  // - Bits 13-15: flip/priority (ignored in Phase 7)
+  // - Bits 10-12: palette select (ignored in Phase 7/10)
+  // - Bits 13-15: flip/priority (ignored in Phase 7/10)
 
-  const u32 tilemap_base_addr =
-      static_cast<u32>(active_regs_.plane_a_base) * 1024;
-  const u32 entry_offset =
-      static_cast<u32>((tile_y * 32 + tile_x) * 2);
+  const u32 tilemap_base_addr = static_cast<u32>(tilemap_base) * 1024;
+  const u32 entry_offset = static_cast<u32>((tile_y * 32 + tile_x) * 2);
   const u32 entry_addr = tilemap_base_addr + entry_offset;
 
   // Read 16-bit entry (little-endian)
@@ -394,6 +426,34 @@ u16 PPU::FetchTilemapEntry(int tile_x, int tile_y) const {
 
   // Extract tile index (bits 0-9)
   return entry & 0x03FF;
+}
+
+void PPU::RenderTilePlaneScanline(int scanline, u8 scroll_x, u8 scroll_y,
+                                  u8 tilemap_base,
+                                  std::array<u8, 256>& out_line) const {
+  // Phase 10: Render one scanline of a tile plane into palette index buffer
+  // This function is shared by both Plane A and Plane B rendering
+
+  // Compute scrolled Y coordinate (wrap at screen height)
+  const int global_y = (scanline + scroll_y) % kScreenHeight;
+  const int tile_y = global_y / 8;
+  const int y_in_tile = global_y % 8;
+
+  for (int x = 0; x < kScreenWidth; ++x) {
+    // Compute scrolled X coordinate (wrap at screen width)
+    const int global_x = (x + scroll_x) % kScreenWidth;
+    const int tile_x = global_x / 8;
+    const int x_in_tile = global_x % 8;
+
+    // Fetch tilemap entry and get tile index
+    const u16 tile_index = FetchTilemapEntry(tile_x, tile_y, tilemap_base);
+
+    // Decode tile pixel to get palette index (0-15)
+    const u8 palette_index = DecodeTilePixel(tile_index, x_in_tile, y_in_tile);
+
+    // Store palette index in output buffer
+    out_line[static_cast<size_t>(x)] = palette_index;
+  }
 }
 
 u32 PPU::PaletteToArgb(u8 palette_index) const {
