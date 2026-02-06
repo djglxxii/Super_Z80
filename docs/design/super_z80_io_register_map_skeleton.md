@@ -161,11 +161,19 @@ If CPU needs indirect VRAM writes (common in VDP designs), define:
 * `0x1E` — PAL_ADDR (R/W)
 * `0x1F` — PAL_DATA (R/W)
 
+PAL_ADDR (0x1E)
+- Byte-addressed
+- Valid range: 0x00–0xFF
+- Each palette entry occupies two bytes:
+  - Even address: high bits
+  - Odd address: low bits
+  
 Palette format:
 
 * 9-bit RGB (3-3-3)
 * Stored packed across bytes (exact packing TBD)
 * Emulator must support mid-frame palette updates (applies starting next pixel/scanline depending on scheduling; recommended: next scanline boundary)
+
 
 ---
 
