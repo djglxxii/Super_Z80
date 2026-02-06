@@ -1,34 +1,48 @@
-# Super_Z80 Diagnostic Cartridge ROM Specification (Authoritative)
+# Super_Z80 Diagnostic Cartridge ROM Specification
 
-**Status:** Required for initial bring-up
-**Audience:** Emulator validation, timing verification, debug tooling
-**Purpose:** Provide a deterministic, minimal software workload that proves the emulator’s core systems function correctly.
+## Canonical Validation ROM (v1.3 – Emulator-Aligned)
 
-This ROM is not a game. It is a **hardware exerciser**.
+**Status:** Mandatory validation ROM
+**Audience:** Emulator correctness verification
+**Purpose:** Prove that the Super_Z80 emulator implements the documented hardware contract correctly and deterministically.
 
-If the emulator fails this ROM, the emulator is wrong.
+This ROM is **not a game**.
+This ROM is **not a stress test**.
+This ROM is a **hardware exerciser**.
 
----
-
-## 1. Design Goals
-
-The diagnostic ROM must validate:
-
-1. CPU execution correctness
-2. Z80 IM 1 interrupt handling
-3. Scanline/VBlank timing
-4. DMA legality and effect
-5. VRAM access correctness
-6. Tile rendering (Plane A)
-7. Palette loading and mid-frame updates
-8. IRQ acknowledge behavior
-9. Stable frame pacing
-
-Audio is intentionally **not** required in phase 1.
+If the emulator fails this ROM, **the emulator is wrong**.
 
 ---
 
-## 2. ROM Constraints
+## 1. Design Intent (Clarified)
+
+The diagnostic ROM validates **only documented, supported hardware behavior**.
+
+It must **not**:
+
+* Probe undefined behavior
+* Rely on CPU-visible VRAM access
+* Use mid-scanline effects
+* Depend on uninitialized state
+* Exploit emulator conveniences
+
+It must validate:
+
+1. Z80 instruction correctness
+2. Interrupt Mode 1 delivery and acknowledgment
+3. Deterministic scanline and VBlank timing
+4. DMA legality and queuing rules
+5. VRAM population via DMA only
+6. Plane A tile rendering
+7. Palette RAM format and timing
+8. IRQ latch / mask / ACK behavior
+9. Long-run frame pacing stability
+
+**Audio is explicitly excluded.**
+
+---
+
+## 2. ROM Constraints (Locked)
 
 | Parameter        | Value              |
 | ---------------- | ------------------ |
@@ -38,241 +52,269 @@ Audio is intentionally **not** required in phase 1.
 | Entry point      | `0x0000`           |
 | Interrupt vector | IM 1 @ `0x0038`    |
 
-The ROM must run entirely from fixed ROM without bank switching.
+The ROM must run entirely from fixed cartridge ROM.
 
 ---
 
-## 3. Memory Usage Plan
+## 3. Memory Usage Plan (CPU-Visible Only)
 
 ### Work RAM (`0xC000–0xFFFF`)
 
-| Address         | Purpose                |
-| --------------- | ---------------------- |
-| `0xC000`        | Frame counter (16-bit) |
-| `0xC002`        | VBlank counter         |
-| `0xC004`        | ISR entry counter      |
-| `0xC006`        | Scratch                |
-| `0xC100–0xC1FF` | DMA source buffer      |
-| `0xC200–0xC2FF` | Tilemap buffer         |
+| Address         | Purpose                     |
+| --------------- | --------------------------- |
+| `0xC000–0xC001` | Frame counter (16-bit)      |
+| `0xC002–0xC003` | VBlank counter (16-bit)     |
+| `0xC004–0xC005` | ISR entry counter (16-bit)  |
+| `0xC006–0xC00F` | Scratch / temporaries       |
+| `0xC100–0xC17F` | DMA source: palette + tiles |
+| `0xC180–0xC2FF` | DMA source: Plane A tilemap |
+
+> **Important:**
+> The ROM must never assume CPU-readable or writable VRAM.
+> All video memory interaction occurs via **DMA only**.
 
 ---
 
-## 4. Startup Sequence (RESET → Main)
+## 4. Startup Sequence (Reset → Main)
 
 ### 4.1 CPU Initialization
 
-On reset:
+On reset, the ROM must:
 
-* Disable interrupts (`DI`)
-* Initialize stack pointer near top of RAM (`SP = 0xFFFE`)
-* Clear RAM region `0xC000–0xC3FF`
-* Set interrupt mode:
+1. Disable interrupts (`DI`)
+2. Initialize stack pointer (`SP = 0xFFFE`)
+3. Clear RAM region `0xC000–0xC2FF`
+4. Set interrupt mode:
 
-  * `IM 1`
-  * `EI` **only after** hardware setup
+   * `IM 1`
+5. Leave interrupts disabled until **all video state is initialized**
 
 ---
 
 ## 5. Video Initialization (Plane A Only)
 
-### 5.1 VDP Global Setup
+### 5.1 Global Video Control
 
-Write registers to:
+Write video control registers to:
 
 * Enable display
 * Enable Plane A
 * Disable Plane B
 * Disable sprites
 
-Expected outcome:
+Expected state:
 
-* Screen initially blank (black)
+* Display enabled
+* Background initially black
+
+No assumptions may be made about VRAM or palette contents at reset.
 
 ---
 
-### 5.2 Palette Initialization (DMA Required)
+## 6. Palette Initialization (DMA-Only, VBlank-Safe)
 
-Prepare palette data in RAM (`0xC100–0xC11F`):
+### 6.1 Palette Data Preparation
 
-* Entry 0: Black
-* Entry 1: Red
-* Entry 2: Green
-* Entry 3: Blue
-* Entry 4: White
-* Remaining entries: gradient or repeated pattern
+Prepare palette data in RAM (`0xC100+`), formatted exactly as:
+
+* 128 entries
+* 9-bit RGB
+* Byte-addressed
+* Two bytes per entry
+
+Minimum required entries:
+
+| Entry | Color |
+| ----- | ----- |
+| 0     | Black |
+| 1     | Red   |
+| 2     | Green |
+| 3     | Blue  |
+| 4     | White |
+
+Remaining entries may be any deterministic pattern.
+
+---
+
+### 6.2 Palette DMA Rules (Validated)
 
 During **VBlank only**:
 
-* DMA RAM → Palette RAM
-* Length = number of palette bytes
+* Program DMA:
 
-**Failure indicators:**
+  * Source: RAM
+  * Destination: Palette RAM
+  * Length: palette byte count
+  * `DST_IS_PALETTE = 1`
 
-* Palette writes outside VBlank must not take effect mid-frame
-* Emulator must allow DMA only during VBlank
+**Required emulator behavior:**
 
----
-
-## 6. Tile Pattern Setup
-
-### 6.1 Tile Pattern Data
-
-Define **exactly 4 tiles**, 8×8, 4bpp:
-
-| Tile | Pattern                 |
-| ---- | ----------------------- |
-| 0    | Solid color (palette 1) |
-| 1    | Checkerboard            |
-| 2    | Vertical stripes        |
-| 3    | Horizontal stripes      |
-
-Pattern bytes placed in RAM at `0xC120–0xC17F`.
+* Palette DMA outside VBlank must **not** execute
+* Palette updates must become visible only at **scanline boundaries**
+* No mid-scanline color changes are permitted
 
 ---
 
-### 6.2 Tile Pattern DMA
+## 7. Tile Pattern Setup (Plane A)
+
+### 7.1 Tile Definitions
+
+Exactly **4 tiles**, 8×8, 4bpp:
+
+| Tile | Description                   |
+| ---- | ----------------------------- |
+| 0    | Solid color (palette entry 1) |
+| 1    | Checkerboard                  |
+| 2    | Vertical stripes              |
+| 3    | Horizontal stripes            |
+
+Tile pattern bytes stored in RAM at `0xC120–0xC17F`.
+
+---
+
+### 7.2 Tile Pattern DMA
 
 During VBlank:
 
-* DMA tile patterns into VRAM pattern base
+* DMA RAM → VRAM (pattern base)
+* Length = exact tile byte count
 
 Expected:
 
-* Tiles decode correctly in viewer/debugger
+* Correct tile decoding
 * No corruption
+* No CPU access to VRAM
 
 ---
 
-## 7. Tilemap Setup (Plane A)
+## 8. Tilemap Setup (Plane A)
 
-### 7.1 Tilemap Layout
+### 8.1 Tilemap Layout
 
-Populate a 32×24 tilemap buffer in RAM:
+Prepare a **32×24 tilemap** in RAM:
 
 ```
 Row 0–23:
 [ 0 1 2 3 0 1 2 3 ... ]
 ```
 
-Each tile uses:
+Tile attributes:
 
 * Palette 0
 * No flip
-* Normal priority
+* Default priority
 
 DMA tilemap into VRAM during VBlank.
 
 ---
 
-## 8. Interrupt System Validation
+## 9. Interrupt System Validation
 
-### 8.1 VBlank IRQ Enable
+### 9.1 VBlank IRQ Enable
 
-* Enable VBlank interrupt
-* Enable global IRQs (`EI`)
+After all video and palette setup:
+
+1. Enable VBlank interrupt in IRQ_ENABLE
+2. Execute `EI`
 
 ---
 
-### 8.2 IM 1 ISR (`0x0038`)
+### 9.2 IM 1 ISR (`0x0038`)
 
-ISR must:
+The interrupt service routine must:
 
-1. Increment `ISR_ENTRY_COUNT`
-2. Increment `VBLANK_COUNT`
-3. Toggle palette entry 1 between:
+1. Increment ISR entry counter
+2. Increment VBlank counter
+3. Toggle palette entry **1**:
 
    * Red ↔ Blue
 4. Write to `IRQ_ACK` to clear VBlank pending
-5. `RETI`
+5. Execute `RETI`
 
-**Expected visual result:**
+**Expected result:**
 
-* Entire screen color pulses at frame rate
+* Entire screen pulses color once per frame
+* No flicker
 * No tearing
-* No missed frames
 
 ---
 
-## 9. Main Loop Behavior
+## 10. Main Loop Behavior
 
-Main loop:
+The main loop must:
 
-* Busy-loop forever
-* Increment `FRAME_COUNTER` once per frame (poll VBlank flag or rely on ISR)
-
-No `HALT` instruction (to avoid masking timing bugs).
+* Run forever
+* Avoid `HALT` (to expose timing errors)
+* Increment frame counter exactly once per frame
+  (via VBlank polling or ISR correlation)
 
 ---
 
-## 10. Expected Emulator Observables
+## 11. Expected Emulator Observables
 
-### 10.1 Visual
+### 11.1 Visual
 
 * Stable 256×192 image
-* No flicker
-* Tiles render correctly
-* Palette toggles once per frame
+* Correct tile patterns
+* Palette toggles exactly once per frame
 
-### 10.2 Timing
+### 11.2 Timing
 
-* ISR fires exactly once per frame
-* Frame pacing stable (no drift)
-* No double IRQs
-* No missed IRQs
+* Exactly one ISR per frame
+* VBlank asserted at scanline 192
+* No missed or double IRQs
+* Stable pacing over minutes of runtime
 
-### 10.3 Debugger Expectations
+### 11.3 Debug Expectations
 
-With debug UI enabled:
+With debug tools enabled:
 
 * Scanline counter reaches 192 → VBlank asserted
-* DMA occurs only during VBlank
-* IRQ pending flag clears after ACK
-* CPU PC enters `0x0038` once per frame
+* DMA executes only during VBlank
+* IRQ pending clears only after ACK
+* CPU PC enters `0x0038` exactly once per frame
 
 ---
 
-## 11. Failure Modes and What They Mean
+## 12. Failure Modes (Interpreted)
 
-| Symptom                           | Likely Cause                                    |
-| --------------------------------- | ----------------------------------------------- |
-| Black screen                      | VRAM writes failing or display disabled         |
-| Screen updates mid-frame          | DMA illegally allowed outside VBlank            |
-| Flickering colors                 | IRQ timing wrong or palette applied immediately |
-| ISR runs multiple times per frame | IRQ_ACK not working                             |
-| No ISR                            | IM 1 not wired correctly                        |
-| Tiles scrambled                   | Pattern decode or DMA source incorrect          |
+| Symptom                 | Meaning                         |
+| ----------------------- | ------------------------------- |
+| Black screen            | DMA failed or display disabled  |
+| Mid-frame changes       | Palette timing violation        |
+| Flickering              | IRQ timing or ACK failure       |
+| Multiple ISRs per frame | IRQ latch or mask error         |
+| No ISR                  | IM 1 not wired correctly        |
+| Scrambled tiles         | Tile decode or DMA source error |
 
 ---
 
-## 12. Success Criteria (Hard Pass)
+## 13. Hard Pass Criteria
 
-The emulator **passes** the diagnostic ROM when:
+The emulator **passes** when all are true:
 
-1. Screen displays correct tile pattern
+1. Correct tile pattern visible
 2. Palette pulses once per frame
 3. ISR count == frame count over time
 4. No visual corruption
-5. No timing drift after minutes of runtime
+5. No timing drift after extended runtime
 
-Only after this passes do we proceed to:
+Only after this ROM passes is the emulator considered:
 
-* Plane B
-* Sprites
-* Scroll
-* Audio
+> **Structurally correct and demo-ready**
 
 ---
 
-## 13. Why This ROM Matters
+## 14. Why This ROM Exists
 
 This ROM:
 
-* Proves the timing model
-* Proves DMA rules
+* Locks the timing model
+* Proves DMA legality
 * Proves interrupt correctness
-* Prevents false confidence
+* Prevents silent regressions
 
-Every future bug is easier once this ROM is solid.
+It is the **ground truth** for emulator correctness.
 
 ---
 

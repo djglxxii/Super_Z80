@@ -1,416 +1,324 @@
-# Super_Z80 I/O Register Map Skeleton (Authoritative)
+# Super_Z80 I/O Register Map
 
-**Status:** Locked skeleton (bitfields may evolve, addresses should not)
-**Audience:** Emulator implementation (Bus, PPU, APU, Mapper, IRQ controller, DMA)
-**Purpose:** Provide a stable, code-ready register namespace so software and emulator agree on behavior.
+## Canonical, Emulator-Aligned Specification (v1.4)
 
----
-
-## 0. Conventions
-
-### I/O Space
-
-* Z80 uses 8-bit I/O ports (`IN A,(n)` / `OUT (n),A`) and 16-bit decoded addressing may mirror by upper byte.
-* For Super_Z80, we define registers in **0x00–0x9F** as canonical.
-* Unmapped ports:
-
-  * Reads return `0xFF`
-  * Writes are ignored
-
-### Read/Write Width
-
-* All ports are **8-bit** unless explicitly marked as “pair” (hi/lo).
-
-### Side-Effects and Timing Rules (must comply with timing model)
-
-* **VBlank begins at scanline 192** and ends at 261.
-* **DMA is only legal during VBlank**.
-* IRQ sources are wired-OR into Z80 `/INT`.
-* IRQs remain asserted until software clears them via ACK registers.
+**Status:** Canonical hardware contract
+**Audience:** Emulator core + ROM authors
+**Design intent:** Stable, deterministic, arcade-authentic register interface
 
 ---
 
-## 1. Port Decode Summary (High Level)
+## 0. Global Rules (Locked)
 
-| Port Range  | Subsystem                                       |
-| ----------- | ----------------------------------------------- |
-| `0x00–0x0F` | Cartridge mapper / banking / cart SRAM control  |
-| `0x10–0x1F` | Video control (planes, scroll, mode, status)    |
-| `0x20–0x2F` | Sprite system (SAT base, sprite control/status) |
-| `0x30–0x3F` | DMA control (RAM→VRAM, VBlank-only)             |
-| `0x40–0x4F` | Controller input                                |
-| `0x50–0x5F` | Expansion / reserved (light gun, future)        |
-| `0x60–0x6F` | PSG (SN76489-style)                             |
-| `0x70–0x7F` | YM2151 + PCM                                    |
-| `0x80–0x8F` | Timer / system IRQ control                      |
-| `0x90–0x9F` | Debug / reserved (optional)                     |
+### I/O model
 
----
+* Z80 8-bit I/O ports
+* Ports **0x00–0x9F** are canonical
+* Upper address byte may mirror (implementation detail)
 
-## 2. Cartridge / Mapper (`0x00–0x0F`)
+### Unmapped ports
 
-### `0x00` — MAP_CTRL (R/W)
+* Reads return `0xFF`
+* Writes are ignored
 
-**Mapper control register**
+### Timing guarantees
 
-* Bits (skeleton):
-
-  * Enable/disable cart SRAM mapping
-  * ROM bank size mode (if supported)
-* Side effects:
-
-  * Changes how CPU address ranges map to cartridge
-
-### `0x01` — ROM_BANK_0 (R/W)
-
-Select switchable ROM bank for CPU region `0x4000–0x7FFF` (or equivalent banked area per spec).
-
-* Write: bank number
-* Read: current bank number
-
-### `0x02` — ROM_BANK_1 (R/W) *(optional, reserved)*
-
-If future mapper supports a second banked window (leave as reserved now).
-
-### `0x03` — SRAM_BANK (R/W) *(optional)*
-
-If SRAM banking exists in carts.
-
-### Reset Rule (Mandatory)
-
-* On reset, emulator must enforce:
-
-  * **Bank 0 mapped at reset vector** (`0x0000`)
-  * Mapper state returns to defaults
+* VBlank = scanlines **192–261**
+* DMA executes **only** during VBlank
+* Register writes take effect at **scanline boundaries**, never mid-scanline
+* IRQ sources are latched until explicitly acknowledged
 
 ---
 
-## 3. Video Control (`0x10–0x1F`)
+## 1. Port Range Summary
 
-### `0x10` — VDP_STATUS (R)
-
-Read-only status flags.
-
-* Bits (skeleton):
-
-  * `VBLANK` (1 during scanlines 192–261)
-  * `SPR_OVERFLOW` (latched if more than 16 sprites on a scanline)
-  * `SCANLINE_IRQ` pending flag
-* Read side-effect (policy):
-
-  * Reading does **not** clear flags (clearing is via IRQ_ACK)
-
-### `0x11` — VDP_CTRL (R/W)
-
-Global video enable/mode flags.
-
-* Bits (skeleton):
-
-  * Display enable
-  * Plane enable masks
-  * Sprite enable
-  * Possibly priority mode
-* Writes take effect:
-
-  * Either immediately or at next scanline boundary (choose one and keep consistent; recommended: next scanline boundary)
-
-### Plane A Scroll (fine)
-
-* `0x12` — PLANE_A_SCROLL_X (R/W)
-* `0x13` — PLANE_A_SCROLL_Y (R/W)
-
-### Plane B Scroll (fine)
-
-* `0x14` — PLANE_B_SCROLL_X (R/W)
-* `0x15` — PLANE_B_SCROLL_Y (R/W)
-
-### Tilemap / Pattern Base Select (VRAM base selectors)
-
-* `0x16` — PLANE_A_BASE (R/W)
-* `0x17` — PLANE_B_BASE (R/W)
-* `0x18` — PATTERN_BASE (R/W)
-  These select VRAM base addresses in implementation-defined units (e.g., 1KB pages). Keep as page indices.
-
-### `0x19` — WINDOW_CTRL (R/W) *(optional)*
-
-Used for HUD splits / windowing.
-
-* Skeleton behavior:
-
-  * Defines a scanline threshold and/or window region for fixed HUD
-
-### VRAM Access Ports (optional but recommended for simplicity)
-
-If CPU needs indirect VRAM writes (common in VDP designs), define:
-
-* `0x1A` — VRAM_ADDR_LO (R/W)
-* `0x1B` — VRAM_ADDR_HI (R/W)
-* `0x1C` — VRAM_DATA (R/W)
-* `0x1D` — VRAM_DATA_INC (W) *(optional; auto-increment write)*
-
-**Rule:** VRAM writes outside VBlank are allowed only if spec says so. For now:
-
-* Outside VBlank:
-
-  * Writes are accepted but may cause undefined behavior in real hardware.
-  * Emulator policy: allow writes but they only affect *next scanline* at earliest (safe), OR optionally warn in debug.
-* DMA is still restricted to VBlank.
-
-### Palette Access Ports
-
-* `0x1E` — PAL_ADDR (R/W)
-* `0x1F` — PAL_DATA (R/W)
-
-PAL_ADDR (0x1E)
-- Byte-addressed
-- Valid range: 0x00–0xFF
-- Each palette entry occupies two bytes:
-  - Even address: high bits
-  - Odd address: low bits
-  
-Palette format:
-
-* 9-bit RGB (3-3-3)
-* Stored packed across bytes (exact packing TBD)
-* Emulator must support mid-frame palette updates (applies starting next pixel/scanline depending on scheduling; recommended: next scanline boundary)
-
+| Range     | Subsystem                   |
+| --------- | --------------------------- |
+| 0x00–0x0F | Cartridge / mapper          |
+| 0x10–0x1F | Video control + palette     |
+| 0x20–0x2F | Sprite system               |
+| 0x30–0x3F | DMA engine                  |
+| 0x40–0x4F | Controller input            |
+| 0x50–0x5F | Reserved                    |
+| 0x60–0x6F | PSG                         |
+| 0x70–0x7F | YM2151 + PCM                |
+| 0x80–0x8F | Timer + IRQ                 |
+| 0x90–0x9F | Reserved / debug (optional) |
 
 ---
 
-## 4. Sprite System (`0x20–0x2F`)
+## 2. Cartridge / Mapper (0x00–0x0F)
 
-### `0x20` — SPR_CTRL (R/W)
+### 0x00 — MAP_CTRL (R/W)
 
-* Sprite enable
-* Sprite size mode selection (8×8, 8×16, 16×16)
-* Priority behavior mode (if any)
+Mapper control flags (implementation-defined).
 
-### Sprite Attribute Table (SAT) base
+### 0x01 — ROM_BANK_0 (R/W)
 
-* `0x21` — SAT_BASE (R/W)
-  Select VRAM base page/index where sprite attributes are read.
+Selects ROM bank for `0x4000–0x7FFF`.
 
-### `0x22` — SPR_STATUS (R)
+### Reset rule (mandatory)
 
-* `OVERFLOW` latched
-* possibly `COLLISION` if ever added (leave reserved)
-
-### Reserved
-
-* `0x23–0x2F` reserved for future extensions (sprite zoom, affine, etc. — not planned)
+* Bank 0 mapped at reset
+* Mapper returns to default state
 
 ---
 
-## 5. DMA Control (`0x30–0x3F`)
+## 3. Video Control (0x10–0x1F)
 
-DMA copies **RAM → VRAM** only.
+### 0x10 — VDP_STATUS (R)
 
-### Source address (CPU address space)
+Latched status bits:
 
-* `0x30` — DMA_SRC_LO (R/W)
-* `0x31` — DMA_SRC_HI (R/W)
+| Bit    | Meaning              |
+| ------ | -------------------- |
+| 0      | VBLANK active        |
+| 1      | SPR_OVERFLOW latched |
+| 2      | SCANLINE_IRQ pending |
+| others | reserved             |
 
-### Destination address (VRAM)
+Reading **does not clear** flags.
 
-* `0x32` — DMA_DST_LO (R/W)
-* `0x33` — DMA_DST_HI (R/W)
+---
+
+### 0x11 — VDP_CTRL (R/W)
+
+**Locked bit layout:**
+
+| Bit | Meaning                                         |
+| --- | ----------------------------------------------- |
+| 7   | Display enable                                  |
+| 1   | Plane B enable                                  |
+| 0   | Plane A enable (forced on when display enabled) |
+
+> Sprite enable is **not** controlled here. See `SPR_CTRL`.
+
+Writes take effect at **next scanline boundary**.
+
+---
+
+### Plane A scroll
+
+* 0x12 — PLANE_A_SCROLL_X
+* 0x13 — PLANE_A_SCROLL_Y
+
+### Plane B scroll
+
+* 0x14 — PLANE_B_SCROLL_X
+* 0x15 — PLANE_B_SCROLL_Y
+
+---
+
+### Tilemap / Pattern base (page-based)
+
+| Port | Function     |
+| ---- | ------------ |
+| 0x16 | PLANE_A_BASE |
+| 0x17 | PLANE_B_BASE |
+| 0x18 | PATTERN_BASE |
+
+* Units: **1 KB pages**
+* Lower address bits implicitly zero
+
+---
+
+### Palette access (canonical)
+
+#### 0x1E — PAL_ADDR (R/W)
+
+* **Byte-addressed**
+* Valid range: 0x00–0xFF
+* Auto-increment on PAL_DATA access
+
+#### 0x1F — PAL_DATA (R/W)
+
+**Palette format (locked):**
+
+* 128 entries
+* Each entry = **9-bit RGB**
+* Stored across **two bytes**
+
+```
+Bits 8–6: Red
+Bits 5–3: Green
+Bits 2–0: Blue
+```
+
+Palette updates become visible at **next scanline boundary**.
+
+---
+
+### ❌ VRAM access ports REMOVED
+
+The Super_Z80 **does not expose CPU-accessible VRAM ports**.
+
+All VRAM manipulation occurs via:
+
+* DMA
+* Internal PPU fetch logic
+
+This is intentional and arcade-authentic.
+
+---
+
+## 4. Sprite System (0x20–0x2F)
+
+### 0x20 — SPR_CTRL (R/W)
+
+| Bit | Meaning                               |
+| --- | ------------------------------------- |
+| 7   | Sprite enable                         |
+| 1–0 | Size mode (00 = 8×8; others reserved) |
+
+---
+
+### 0x21 — SAT_BASE (R/W)
+
+VRAM page index of Sprite Attribute Table.
+
+---
+
+### 0x22 — SPR_STATUS (R)
+
+| Bit    | Meaning          |
+| ------ | ---------------- |
+| 0      | OVERFLOW latched |
+| others | reserved         |
+
+---
+
+## 5. DMA Engine (0x30–0x3F)
+
+### Source (CPU space)
+
+* 0x30 — DMA_SRC_LO
+* 0x31 — DMA_SRC_HI
+
+### Destination (video bus)
+
+* 0x32 — DMA_DST_LO
+* 0x33 — DMA_DST_HI
 
 ### Length
 
-* `0x34` — DMA_LEN_LO (R/W)
-* `0x35` — DMA_LEN_HI (R/W)
-
-### `0x36` — DMA_CTRL (R/W)
-
-* Bit 0: START
-* Bit 1: BUSY (read-only reflection)
-* Bit 2: QUEUE_IF_NOT_VBLANK (policy bit; recommended default = 1)
-* Other bits reserved
-
-### DMA Execution Rules (Mandatory)
-
-* If START written while in VBlank:
-
-  * Perform copy immediately
-  * BUSY clears immediately
-  * Optional: raise DMA_DONE flag in IRQ_STATUS
-* If START written outside VBlank:
-
-  * If QUEUE_IF_NOT_VBLANK=1: queue it for next VBlank
-  * Else: ignore and optionally set DMA_ERROR flag
+* 0x34 — DMA_LEN_LO
+* 0x35 — DMA_LEN_HI
 
 ---
 
-## 6. Controller Input (`0x40–0x4F`)
+### 0x36 — DMA_CTRL (R/W) **(Locked)**
 
-### `0x40` — PAD1 (R)
+| Bit | Name                | Description                 |
+| --- | ------------------- | --------------------------- |
+| 7   | BUSY (R)            | DMA in progress             |
+| 3   | DST_IS_PALETTE      | 0=VRAM, 1=Palette RAM       |
+| 1   | QUEUE_IF_NOT_VBLANK | Queue DMA until next VBlank |
+| 0   | START (W)           | Initiate DMA                |
 
-Bitfield (suggested mapping):
+**Rules:**
 
-* Bit 0–3: D-pad (Up/Down/Left/Right)
-* Bit 4–7: Buttons 1–4
-
-### `0x41` — PAD1_SYS (R)
-
-* Start / Select
-* Possibly hardware ID bits
-
-### `0x42` — PAD2 (R)
-
-Same as PAD1
-
-### `0x43` — PAD2_SYS (R)
-
-Same as PAD1_SYS
-
-### `0x44–0x4F`
-
-Reserved (multitap, light gun, etc.)
+* DMA executes only during VBlank
+* If queued, runs at next VBlank start
+* No CPU stall
 
 ---
 
-## 7. Expansion / Reserved (`0x50–0x5F`)
+## 6. Controller Input (0x40–0x4F)
 
-Reserved for:
+### 0x40 — PAD1 (R)
 
-* Light gun support
-* Future peripherals
-  Default behavior:
-* Read `0xFF`, writes ignored
+Bits:
 
----
+* 0–3: D-pad
+* 4–7: Buttons 1–4
 
-## 8. PSG (`0x60–0x6F`)
+### 0x41 — PAD1_SYS (R)
 
-SN76489-style PSG typically uses a single write port.
+Start / Select
 
-* `0x60` — PSG_DATA (W)
-  Write-only latch/data port.
-
-Optional:
-
-* `0x61` — PSG_STATUS (R) (not required for SN76489; keep reserved)
-
-Remaining:
-
-* `0x62–0x6F` reserved
+### 0x42 / 0x43 — PAD2 equivalents
 
 ---
 
-## 9. YM2151 + PCM (`0x70–0x7F`)
+## 7. PSG (0x60–0x6F)
 
-### YM2151 (typical two-port model)
+### 0x60 — PSG_DATA (W)
 
-* `0x70` — OPM_ADDR (W)
-* `0x71` — OPM_DATA (W/R optional)
-  If reads are unsupported in chosen core, return `0xFF`.
-
-### PCM (2 channels, trigger-based)
-
-For each channel: sample start, length, volume, trigger.
-
-#### Channel 0
-
-* `0x72` — PCM0_START_LO (R/W)
-* `0x73` — PCM0_START_HI (R/W)
-* `0x74` — PCM0_LEN (R/W)
-* `0x75` — PCM0_VOL (R/W)
-* `0x76` — PCM0_CTRL (R/W)
-
-  * Bit 0: TRIGGER (one-shot)
-  * Bit 1: LOOP (optional; default off)
-  * Bit 7: BUSY (read-only reflection)
-
-#### Channel 1
-
-* `0x77` — PCM1_START_LO (R/W)
-* `0x78` — PCM1_START_HI (R/W)
-* `0x79` — PCM1_LEN (R/W)
-* `0x7A` — PCM1_VOL (R/W)
-* `0x7B` — PCM1_CTRL (R/W)
-
-#### Mixer / Master
-
-* `0x7C` — AUDIO_MASTER_VOL (R/W)
-* `0x7D` — AUDIO_PAN (R/W) *(optional)*
-* `0x7E–0x7F` reserved
+SN76489-style write-only latch.
 
 ---
 
-## 10. Timer / System IRQ (`0x80–0x8F`)
+## 8. YM2151 + PCM (0x70–0x7F)
 
-### `0x80` — IRQ_STATUS (R)
+### YM2151
 
-Latched interrupt sources (read-only).
+* 0x70 — OPM_ADDR (W)
+* 0x71 — OPM_DATA (W; reads return 0xFF)
 
-* Bits (skeleton):
+---
 
-  * Bit 0: VBLANK pending
-  * Bit 1: TIMER pending
-  * Bit 2: SCANLINE pending
-  * Bit 3: SPR_OVERFLOW pending
-  * Bit 4: DMA_DONE pending (optional)
-  * Others reserved
+### PCM Channel 0
 
-### `0x81` — IRQ_ENABLE (R/W)
+* 0x72 — START_LO
+* 0x73 — START_HI
+* 0x74 — LEN
+* 0x75 — VOL
+* 0x76 — CTRL
 
-Mask which sources can assert `/INT`.
+### PCM Channel 1
 
-### `0x82` — IRQ_ACK (W)
+* 0x77–0x7B mirror Channel 0
 
-Write-1-to-clear for IRQ_STATUS bits.
+CTRL bits:
 
-* Example: write `0b0000_0001` clears VBlank pending.
+* Bit 0: TRIGGER
+* Bit 7: BUSY (R)
+
+---
+
+## 9. Timer / IRQ (0x80–0x8F)
+
+### 0x80 — IRQ_STATUS (R)
+
+Latched pending flags.
+
+### 0x81 — IRQ_ENABLE (R/W)
+
+Mask bits.
+
+### 0x82 — IRQ_ACK (W)
+
+Write-1-to-clear.
 
 ### Timer
 
-* `0x83` — TIMER_RELOAD_LO (R/W)
-* `0x84` — TIMER_RELOAD_HI (R/W)
-* `0x85` — TIMER_CTRL (R/W)
-
-  * enable
-  * prescaler select (TBD)
-  * one-shot vs periodic
+* 0x83 — RELOAD_LO
+* 0x84 — RELOAD_HI
+* 0x85 — TIMER_CTRL
 
 ### Scanline compare
 
-* `0x86` — SCANLINE_CMP (R/W)
-  When beam reaches this scanline, set SCANLINE pending (if enabled).
-
-### `0x87–0x8F` reserved
+* 0x86 — SCANLINE_CMP
 
 ---
 
-## 11. Debug / Reserved (`0x90–0x9F`)
+## 10. Reserved / Debug (0x90–0x9F)
 
-This range is reserved. Optional emulator-only features can be exposed here **only** if we intentionally allow “non-hardware” debug ports.
-
-Default:
-
-* Reads `0xFF`, writes ignored
+* Reads return 0xFF
+* Writes ignored
+* Emulator-only debug ports may exist **only if explicitly enabled**
 
 ---
 
-## 12. Register Behavior Guarantees (Implementation Contract)
+## Final Outcome
 
-1. **Status bits are latched** and cleared only by `IRQ_ACK` (write-1-to-clear).
-2. **VBlank flag** is true only during scanlines 192–261.
-3. **DMA** is legal only during VBlank; policy for non-VBlank triggers is defined by DMA_CTRL queue bit.
-4. **Scanline IRQ** fires at scanline boundary (start of line).
-5. Unmapped I/O returns `0xFF`.
+With this revision:
 
----
-
-## 13. What This Skeleton Enables Immediately
-
-With this map, we can implement:
-
-* Bus + I/O dispatch
-* IRQ controller
-* VBlank scheduling
-* DMA engine
-* Stubbed PPU register storage
-* Stubbed APU register storage
-* Cartridge banking control
+* ❌ No undocumented features remain
+* ❌ No CPU-visible VRAM fiction
+* ✅ DMA → Palette is first-class, not a hack
+* ✅ Palette + tile formats are locked
+* ✅ Demo ROM authors now have a **real hardware contract**
 
 ---
+
