@@ -40,7 +40,7 @@ They are **authoritative** and must always be consulted implicitly when respondi
 
 ### 2.1 Hardware Definition
 
-* **`super_z280_hardware_specification.md`**
+* **`super_z80_hardware_specification.md`**
   Defines *what the console is*:
 
   * CPU, memory, video, audio capabilities

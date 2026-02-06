@@ -60,7 +60,7 @@ Hardware spec states both planes share:
 * Tile size 8×8, 4bpp (16 colors per tile)
 * Tilemap size **32×24 tiles**
 * Independent fine scroll per plane
-* Attributes include palette select, priority, flip. 【turn12file12†super_z280_hardware_specification.md†L11-L20】
+* Attributes include palette select, priority, flip. 【turn12file12†super_z80_hardware_specification.md†L11-L20】
 
 Phase 10 implementation requirement:
 
@@ -94,7 +94,7 @@ Phase 10 implementation requirement:
 
 ### Optional per-tile priority (only if already unambiguous in your implementation)
 
-Hardware spec says tiles have a priority attribute. 【turn12file12†super_z280_hardware_specification.md†L15-L20】
+Hardware spec says tiles have a priority attribute. 【turn12file12†super_z80_hardware_specification.md†L15-L20】
 
 However, the I/O register map skeleton does **not** lock the tile entry bit layout in Phase 10. Therefore:
 
@@ -220,7 +220,7 @@ Implement and verify each checklist item from Phase 10:
     * Changing `PLANE_B_BASE` selects a different tilemap region in VRAM without affecting Plane A. 【turn12file6†super_z80_emulator_bringup_checklist.md†L65-L71】
 2. **Independent scroll works**
 
-    * Plane B scroll X/Y changes move only Plane B; Plane A remains unaffected. 【turn12file6†super_z80_emulator_bringup_checklist.md†L65-L71】【turn12file12†super_z280_hardware_specification.md†L13-L15】
+    * Plane B scroll X/Y changes move only Plane B; Plane A remains unaffected. 【turn12file6†super_z80_emulator_bringup_checklist.md†L65-L71】【turn12file12†super_z80_hardware_specification.md†L13-L15】
 3. **Priority rules honored**
 
     * Default B behind A compositing is correct and stable (and optional per-tile override only if non-ambiguous). 【turn12file6†super_z80_emulator_bringup_checklist.md†L65-L71】

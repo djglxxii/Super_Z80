@@ -35,7 +35,7 @@ Implement as a distinct device owned by `SuperZ80Console`:
 
 Add a VRAM byte array to the PPU:
 
-* If `super_z280_hardware_specification.md` does not explicitly lock VRAM size in your repository copy, define:
+* If `super_z80_hardware_specification.md` does not explicitly lock VRAM size in your repository copy, define:
 
     * `static constexpr size_t kVramSizeBytes = /* placeholder */;`
     * Make it *one-line* to revise later.
