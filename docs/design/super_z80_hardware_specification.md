@@ -164,41 +164,51 @@ Sprite evaluation and scanline limits are hardware-managed to minimize flicker.
 
 ---
 
-## 6. Audio Subsystem (Arcade-Class)
+## 6. Audio Subsystem
 
-**Architectural Model:**
+### Components (Locked)
 
-```
-Z80 (Main CPU)
- ├─ PSG
- ├─ YM2151 FM Synthesizer
- ├─ PCM Sample Player
- └─ Audio Mixer + DAC
-```
+The Super_Z80 audio system consists of two hardware sound generators:
 
-### Components
+* **PSG:** SN76489-compatible programmable sound generator
+  * 3 tone channels
+  * 1 noise channel
+* **FM Synthesizer:** YM2151 (OPM)
+  * 8 independent FM channels
 
-* **PSG:** SN76489-style
+No PCM or sample playback hardware is present.
 
-    * 3 square wave channels
-    * 1 noise generator
-* **FM Synthesis:** **YM2151 (OPM)**
+---
 
-    * 8 channels
-    * 4 operators per channel
-    * Full envelopes, modulation, LFO
-* **PCM Playback:**
+### Architectural Model
 
-    * **2 channels**
-    * 8-bit samples
-    * Trigger-based one-shot playback
-    * Samples sourced from cartridge ROM
+Z80
+├─ PSG (SN76489-compatible)
+├─ YM2151 (OPM)
+└─ Stereo mixer + DAC
 
-### Output
+Audio mixing is performed in hardware.  
+The CPU sequences audio exclusively through register writes.
 
-* Hardware mixing of PSG + FM + PCM
-* Stereo-capable DAC
-* Master volume control
+---
+
+### Design Rationale
+
+This configuration represents a **premium home-console audio system** for the mid-1980s:
+
+* PSG provides inexpensive effects, noise, and simple tonal layers
+* YM2151 provides rich, arcade-class FM music
+* Absence of PCM avoids sample-driven content expectations typical of later arcade and 16-bit systems
+
+This balance intentionally exceeds NES/SMS-class audio while remaining plausible for a high-end consumer console.
+
+---
+
+### Timing Rules
+
+* Audio chips advance based on elapsed system time
+* Audio stepping is **time-driven**, not frame-driven
+* No audio-generated interrupts exist
 
 ---
 

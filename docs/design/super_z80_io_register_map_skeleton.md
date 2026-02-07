@@ -33,7 +33,7 @@
 ## 1. Port Range Summary
 
 | Range     | Subsystem                   |
-| --------- | --------------------------- |
+| --------- |-----------------------------|
 | 0x00–0x0F | Cartridge / mapper          |
 | 0x10–0x1F | Video control + palette     |
 | 0x20–0x2F | Sprite system               |
@@ -41,7 +41,7 @@
 | 0x40–0x4F | Controller input            |
 | 0x50–0x5F | Reserved                    |
 | 0x60–0x6F | PSG                         |
-| 0x70–0x7F | YM2151 + PCM                |
+| 0x70–0x7F | YM2151 (FM)                 |
 | 0x80–0x8F | Timer + IRQ                 |
 | 0x90–0x9F | Reserved / debug (optional) |
 
@@ -248,31 +248,15 @@ SN76489-style write-only latch.
 
 ---
 
-## 8. YM2151 + PCM (0x70–0x7F)
-
-### YM2151
+## 8. YM2151 (FM Synthesizer) — 0x70–0x71
 
 * 0x70 — OPM_ADDR (W)
-* 0x71 — OPM_DATA (W; reads return 0xFF)
+* 0x71 — OPM_DATA (W)
 
----
+Reads return 0xFF.
 
-### PCM Channel 0
-
-* 0x72 — START_LO
-* 0x73 — START_HI
-* 0x74 — LEN
-* 0x75 — VOL
-* 0x76 — CTRL
-
-### PCM Channel 1
-
-* 0x77–0x7B mirror Channel 0
-
-CTRL bits:
-
-* Bit 0: TRIGGER
-* Bit 7: BUSY (R)
+YM2151 timing is derived from the system master clock.
+No status polling or IRQ output is exposed to the CPU.
 
 ---
 

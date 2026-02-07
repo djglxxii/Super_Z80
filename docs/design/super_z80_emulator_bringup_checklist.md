@@ -225,20 +225,27 @@ Sprites render correctly without flicker beyond hardware limits.
 
 ---
 
-## Phase 12 — Audio Bring-Up (Last)
+## Phase 12 — Audio Bring-Up (PSG + YM2151)
 
-**Goal:** Add sound without destabilizing timing.
+**Goal:** Enable premium audio while preserving timing determinism.
 
 ### Checklist
 
-* [ ] PSG audible and stable
-* [ ] YM2151 produces correct tones
-* [ ] PCM playback works
-* [ ] No audio crackle or drift
-* [ ] Audio stays in sync with video over time
+* [ ] PSG produces stable tones and noise
+* [ ] YM2151 produces correct FM output
+* [ ] Audio mixing stable and balanced
+* [ ] No crackle or drift over long runs
+* [ ] Audio remains synchronized with video timing
 
-**Pass Criteria:**
-Audio stable for long sessions with no timing drift.
+**Explicitly excluded:**
+
+* PCM playback
+* Sample streaming
+* Audio-driven IRQs
+
+### Pass Criteria
+
+Audio remains stable, synchronized, and deterministic over extended runtime.
 
 ---
 

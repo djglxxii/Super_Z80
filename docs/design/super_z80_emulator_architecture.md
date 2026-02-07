@@ -224,30 +224,31 @@ Rules:
 
 ---
 
-### 3.8 `APU` (Audio Subsystem)
+### 3.8 APU (Audio Subsystem)
 
-**Role:** Audio chip coordination and mixing.
+**Role:** Coordinate and mix hardware audio generators.
 
 Owns:
 
-* PSG core
+* PSG core (SN76489-compatible)
 * YM2151 core
-* PCM channels
-* Audio mixer
+* Stereo mixer
 
 Responsibilities:
 
-* Advance audio chips based on elapsed time
-* Generate audio samples
-* Feed host audio buffer
+* Advance audio chips based on elapsed system time
+* Generate audio samples for host output
+* Maintain synchronization with the Scheduler
 
 Must:
 
-* Stay synchronized with Scheduler
-* Avoid frame-based audio stepping
+* Remain time-driven, not frame-driven
+* Follow the global timing model
 
 Must NOT:
 
+* Perform PCM or sample streaming
+* Generate IRQs
 * Depend on video frame boundaries
 
 ---
