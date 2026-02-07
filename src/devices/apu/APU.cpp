@@ -25,8 +25,6 @@ APU::APU() {
   opm_.SetSampleRate(config_.sample_rate);
   opm_.Reset();
 
-  pcm_.Reset();
-
   SZ_LOG_INFO("APU: CPU_HZ=%.1f PSG_HZ=%.1f OPM_HZ=%.1f SampleRate=%d RingCap=%d",
               config_.cpu_hz, config_.psg_hz, config_.opm_hz,
               config_.sample_rate, config_.ring_capacity_frames);
@@ -39,7 +37,6 @@ APU::~APU() = default;
 void APU::Reset() {
   psg_.Reset();
   opm_.Reset();
-  pcm_.Reset();
 
   cpu_cycle_accum_fp_ = 0;
   master_vol_ = 0xFF;
@@ -53,11 +50,6 @@ void APU::Reset() {
   last_write_head_ = 0;
   last_write_count_ = 0;
   last_writes_ = {};
-}
-
-void APU::AttachCartridgeROM(const uint8_t* rom_data, size_t rom_size) {
-  pcm_.AttachROM(rom_data, rom_size);
-  SZ_LOG_INFO("APU: Attached cartridge ROM (%zu bytes) for PCM", rom_size);
 }
 
 void APU::RecordWrite(uint16_t port, uint8_t value) {
@@ -91,18 +83,6 @@ void APU::IO_Write(uint8_t port, uint8_t value, uint64_t cpu_cycle) {
     return;
   }
 
-  // PCM Channel 0: 0x72-0x76
-  if (port >= 0x72 && port <= 0x76) {
-    pcm_.WriteReg(0, port - 0x72, value);
-    return;
-  }
-
-  // PCM Channel 1: 0x77-0x7B
-  if (port >= 0x77 && port <= 0x7B) {
-    pcm_.WriteReg(1, port - 0x77, value);
-    return;
-  }
-
   // Master controls
   if (port == 0x7C) {
     master_vol_ = value;
@@ -119,16 +99,6 @@ uint8_t APU::IO_Read(uint8_t port) {
   if (port == 0x71) {
     // OPM status read
     return opm_.ReadStatus();
-  }
-
-  // PCM Channel 0 registers
-  if (port >= 0x72 && port <= 0x76) {
-    return pcm_.ReadReg(0, port - 0x72);
-  }
-
-  // PCM Channel 1 registers
-  if (port >= 0x77 && port <= 0x7B) {
-    return pcm_.ReadReg(1, port - 0x77);
   }
 
   // Master volume
@@ -172,12 +142,10 @@ void APU::GenerateFrames(int frames) {
     float psg_buf[kMaxFramesBatch];
     float opm_l[kMaxFramesBatch];
     float opm_r[kMaxFramesBatch];
-    float pcm_buf[kMaxFramesBatch];
 
     // Render each chip
     psg_.RenderMono(psg_buf, batch);
     opm_.RenderStereo(opm_l, opm_r, batch);
-    pcm_.RenderMono(pcm_buf, batch);
 
     // Mix to stereo int16
     int16_t mix_buf[kMaxFramesBatch * 2];
@@ -187,11 +155,10 @@ void APU::GenerateFrames(int frames) {
       float psg_s = psg_muted_ ? 0.0f : psg_buf[i] * psg_gain_;
       float opm_sl = opm_muted_ ? 0.0f : opm_l[i] * opm_gain_;
       float opm_sr = opm_muted_ ? 0.0f : opm_r[i] * opm_gain_;
-      float pcm_s = pcm_muted_ ? 0.0f : pcm_buf[i] * pcm_gain_;
 
-      // PSG and PCM are mono -> equal L/R
-      float left = (psg_s + opm_sl + pcm_s) * master;
-      float right = (psg_s + opm_sr + pcm_s) * master;
+      // PSG is mono -> equal L/R
+      float left = (psg_s + opm_sl) * master;
+      float right = (psg_s + opm_sr) * master;
 
       // Hard clamp to int16
       auto clamp16 = [](float v) -> int16_t {
@@ -234,7 +201,6 @@ DebugState APU::GetDebugState() const {
   state.stats = GetStats();
   state.psg_muted = psg_muted_;
   state.opm_muted = opm_muted_;
-  state.pcm_muted = pcm_muted_;
   return state;
 }
 
@@ -267,10 +233,6 @@ void APU::SetMutePSG(bool mute) {
 void APU::SetMuteOPM(bool mute) {
   opm_muted_ = mute;
   opm_.SetMute(mute);
-}
-
-void APU::SetMutePCM(bool mute) {
-  pcm_muted_ = mute;
 }
 
 }  // namespace sz::apu

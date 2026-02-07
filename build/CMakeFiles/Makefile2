@@ -100,12 +100,12 @@ clean: CMakeFiles/irq_phase4_tests.dir/clean
 CMakeFiles/superz80_core.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57 "Built target superz80_core"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56 "Built target superz80_core"
 .PHONY : CMakeFiles/superz80_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/superz80_core.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 25
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 24
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/superz80_core.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 0
 .PHONY : CMakeFiles/superz80_core.dir/rule
@@ -117,7 +117,7 @@ superz80_core: CMakeFiles/superz80_core.dir/rule
 # codegen rule for target.
 CMakeFiles/superz80_core.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57 "Finished codegen for target superz80_core"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51,52,53,54,55,56 "Finished codegen for target superz80_core"
 .PHONY : CMakeFiles/superz80_core.dir/codegen
 
 # clean rule for target.
@@ -170,7 +170,7 @@ CMakeFiles/superz80_app.dir/all: CMakeFiles/imgui.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/superz80_app.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 51
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 50
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/superz80_app.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 0
 .PHONY : CMakeFiles/superz80_app.dir/rule
@@ -202,7 +202,7 @@ CMakeFiles/cpu_phase1_determinism.dir/all: CMakeFiles/superz80_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/cpu_phase1_determinism.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 27
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 26
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/cpu_phase1_determinism.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 0
 .PHONY : CMakeFiles/cpu_phase1_determinism.dir/rule
@@ -234,7 +234,7 @@ CMakeFiles/bus_phase2_tests.dir/all: CMakeFiles/superz80_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/bus_phase2_tests.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 27
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 26
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/bus_phase2_tests.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 0
 .PHONY : CMakeFiles/bus_phase2_tests.dir/rule
@@ -266,7 +266,7 @@ CMakeFiles/irq_phase4_tests.dir/all: CMakeFiles/superz80_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/irq_phase4_tests.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 27
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 26
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/irq_phase4_tests.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/djglxxii/src/Super_Z80/build/CMakeFiles 0
 .PHONY : CMakeFiles/irq_phase4_tests.dir/rule

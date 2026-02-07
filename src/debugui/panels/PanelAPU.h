@@ -12,7 +12,6 @@ class PanelAPU {
  private:
   bool psg_muted_ = false;
   bool opm_muted_ = false;
-  bool pcm_muted_ = false;
 };
 
 }  // namespace sz::debugui

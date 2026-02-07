@@ -6,8 +6,7 @@ Produces test_audio.bin for the Super_Z80 emulator.
 Test sequence:
 1. PSG tone at ~440Hz, then pitch change to ~880Hz after ~2 seconds
 2. YM2151 simple tone on channel 0
-3. PCM trigger from ROM sample data
-4. Loop with periodic PCM retrigger
+3. Loop forever (PSG + YM2151 continue playing)
 """
 
 import struct
@@ -31,21 +30,12 @@ IRQ_ACK    = 0x82
 PSG_DATA   = 0x60
 OPM_ADDR   = 0x70
 OPM_DATA   = 0x71
-PCM0_START_LO = 0x72
-PCM0_START_HI = 0x73
-PCM0_LEN      = 0x74
-PCM0_VOL      = 0x75
-PCM0_CTRL     = 0x76
 AUDIO_MASTER_VOL = 0x7C
 
 # RAM addresses
 FRAME_COUNT = 0xC000
 FRAME_COUNT_HI = 0xC001
 TEST_STATE  = 0xC002
-
-# PCM sample data will be at this address in ROM
-PCM_SAMPLE_ADDR = 0x0400  # 1024 in ROM
-PCM_SAMPLE_LEN = 64
 
 # =====================================================
 # Z80 instruction encoding helpers
@@ -239,68 +229,14 @@ pc = emit(pc, opm_write(0x28, 0x4A))
 pc = emit(pc, opm_write(0x08, 0x78))
 
 # =====================================================
-# Step 3: PCM - trigger a sample on channel 0
-# =====================================================
-
-# PCM start address
-pcm_lo = PCM_SAMPLE_ADDR & 0xFF
-pcm_hi = (PCM_SAMPLE_ADDR >> 8) & 0xFF
-
-pc = emit(pc, LD_A_n(pcm_lo))
-pc = emit(pc, OUT_n_A(PCM0_START_LO))
-pc = emit(pc, LD_A_n(pcm_hi))
-pc = emit(pc, OUT_n_A(PCM0_START_HI))
-
-# Length
-pc = emit(pc, LD_A_n(PCM_SAMPLE_LEN))
-pc = emit(pc, OUT_n_A(PCM0_LEN))
-
-# Volume (~75%)
-pc = emit(pc, LD_A_n(0xC0))
-pc = emit(pc, OUT_n_A(PCM0_VOL))
-
-# Trigger
-pc = emit(pc, LD_A_n(0x01))
-pc = emit(pc, OUT_n_A(PCM0_CTRL))
-# Clear trigger
-pc = emit(pc, LD_A_n(0x00))
-pc = emit(pc, OUT_n_A(PCM0_CTRL))
-
-# =====================================================
-# Main loop: wait and retrigger PCM
+# Main loop: wait forever (PSG + YM2151 continue playing)
 # =====================================================
 main_loop_addr = pc
 
 pc = emit(pc, CALL(WAIT_SUB))
 
-# Retrigger PCM0
-pc = emit(pc, LD_A_n(0x01))
-pc = emit(pc, OUT_n_A(PCM0_CTRL))
-pc = emit(pc, LD_A_n(0x00))
-pc = emit(pc, OUT_n_A(PCM0_CTRL))
-
-# Check BUSY
-pc = emit(pc, IN_A_n(PCM0_CTRL))
-
 # Jump back to main loop
 pc = emit(pc, JP(main_loop_addr))
-
-# =====================================================
-# PCM Sample Data at PCM_SAMPLE_ADDR
-# Short decaying click waveform, 8-bit unsigned
-# =====================================================
-sample_data = [
-    0x80, 0xB0, 0xD0, 0xE8, 0xF8, 0xFF, 0xF8, 0xE8,
-    0xD0, 0xB0, 0x80, 0x50, 0x30, 0x18, 0x08, 0x00,
-    0x08, 0x18, 0x30, 0x50, 0x80, 0xA8, 0xC8, 0xE0,
-    0xF0, 0xF8, 0xF0, 0xE0, 0xC8, 0xA8, 0x80, 0x58,
-    0x38, 0x20, 0x10, 0x08, 0x10, 0x20, 0x38, 0x58,
-    0x80, 0xA0, 0xB8, 0xC8, 0xD0, 0xD4, 0xD0, 0xC8,
-    0xB8, 0xA0, 0x80, 0x60, 0x48, 0x38, 0x30, 0x2C,
-    0x30, 0x38, 0x48, 0x60, 0x80, 0x90, 0x98, 0x98,
-]
-assert len(sample_data) == PCM_SAMPLE_LEN
-emit(PCM_SAMPLE_ADDR, sample_data)
 
 # =====================================================
 # Write ROM file
@@ -321,7 +257,6 @@ with open("test_audio.bin", "wb") as f:
     f.write(output)
 
 print(f"Phase 12 Audio Test ROM generated: test_audio.bin ({len(output)} bytes)")
-print(f"  PCM sample data at 0x{PCM_SAMPLE_ADDR:04X} ({PCM_SAMPLE_LEN} bytes)")
 print(f"  Code ends at 0x{pc:04X}")
 print(f"  ISR at 0x0038")
 print(f"  Wait subroutine at 0x{WAIT_SUB:04X}")

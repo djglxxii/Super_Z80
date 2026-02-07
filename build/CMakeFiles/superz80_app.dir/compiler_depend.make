@@ -17,7 +17,6 @@ CMakeFiles/superz80_app.dir/src/app/App.cpp.o: /home/djglxxii/src/Super_Z80/src/
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDiagnostics.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -797,7 +796,6 @@ CMakeFiles/superz80_app.dir/src/app/SDLAudioDevice.cpp.o: /home/djglxxii/src/Sup
   /home/djglxxii/src/Super_Z80/src/core/log/Logger.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /usr/include/SDL2/SDL.h \
@@ -2272,7 +2270,6 @@ CMakeFiles/superz80_app.dir/src/debugui/DebugUI.cpp.o: /home/djglxxii/src/Super_
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelScheduler.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -2747,7 +2744,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelAPU.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelAPU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -3029,7 +3025,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelBus.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelBus.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -3311,7 +3306,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCPU.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCPU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -3593,7 +3587,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelCartridge.cpp.o: /home/djglx
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelCartridge.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -3875,7 +3868,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDMA.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDMA.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -4157,7 +4149,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelDiagnostics.cpp.o: /home/djg
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDiagnostics.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -4439,7 +4430,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelIRQ.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -4721,7 +4711,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelInput.cpp.o: /home/djglxxii/
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelInput.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -5003,7 +4992,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelPPU.cpp.o: /home/djglxxii/sr
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelPPU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -5285,7 +5273,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o: /home/djglx
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelScheduler.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -5573,7 +5560,6 @@ CMakeFiles/superz80_app.dir/src/main.cpp.o: /home/djglxxii/src/Super_Z80/src/mai
   /home/djglxxii/src/Super_Z80/src/debugui/panels/PanelDiagnostics.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -6193,6 +6179,8 @@ libimgui.a:
 
 /usr/include/c++/15.2.1/bits/ios_base.h:
 
+/usr/include/c++/15.2.1/backward/binders.h:
+
 /usr/include/c++/15.2.1/bits/hash_bytes.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/cldemoteintrin.h:
@@ -6217,6 +6205,10 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o:
 
 /usr/include/c++/15.2.1/bits/cxxabi_forced.h:
 
+/usr/include/c++/15.2.1/cctype:
+
+/usr/include/c++/15.2.1/ext/concurrence.h:
+
 /usr/include/c++/15.2.1/bit:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/ia32intrin.h:
@@ -6228,12 +6220,6 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelIRQ.cpp.o:
 /usr/include/c++/15.2.1/bits/align.h:
 
 /usr/include/c++/15.2.1/debug/debug.h:
-
-/usr/include/c++/15.2.1/backward/binders.h:
-
-/usr/include/c++/15.2.1/ext/concurrence.h:
-
-/usr/include/c++/15.2.1/cctype:
 
 /usr/include/c++/15.2.1/backward/auto_ptr.h:
 
@@ -6401,6 +6387,8 @@ CMakeFiles/superz80_app.dir/src/debugui/panels/PanelScheduler.cpp.o:
 
 /usr/include/SDL2/SDL_joystick.h:
 
+/usr/include/asm/types.h:
+
 _deps/imgui-src/imconfig.h:
 
 /usr/include/SDL2/SDL_mouse.h:
@@ -6412,18 +6400,6 @@ _deps/imgui-src/imconfig.h:
 /usr/include/SDL2/SDL_config_unix.h:
 
 /usr/include/SDL2/SDL_config.h:
-
-/usr/lib/libc.so.6:
-
-/usr/include/bits/fp-fast.h:
-
-/usr/include/sched.h:
-
-/usr/include/wctype.h:
-
-/usr/include/bits/posix1_lim.h:
-
-/usr/include/wchar.h:
 
 /usr/include/SDL2/SDL_loadso.h:
 
@@ -6447,11 +6423,29 @@ CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/xsaveoptintrin.h:
 
+/usr/lib/libc.so.6:
+
+/usr/include/bits/fp-fast.h:
+
+/usr/include/sched.h:
+
+/usr/include/wctype.h:
+
+/usr/include/bits/posix1_lim.h:
+
+/usr/include/wchar.h:
+
 /usr/include/bits/confname.h:
 
 /usr/include/bits/types/__mbstate_t.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/avx2intrin.h:
+
+/home/djglxxii/src/Super_Z80/src/app/SDLHost.h:
+
+/usr/include/c++/15.2.1/bits/alloc_traits.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/hresetintrin.h:
 
 /usr/include/c++/15.2.1/bits/ostream_insert.h:
 
@@ -6539,14 +6533,6 @@ CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o:
 
 /usr/include/string.h:
 
-/home/djglxxii/src/Super_Z80/src/app/SDLHost.h:
-
-/usr/include/c++/15.2.1/bits/alloc_traits.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/hresetintrin.h:
-
-/usr/include/bits/pthreadtypes-arch.h:
-
 /usr/include/SDL2/SDL_mutex.h:
 
 /usr/include/SDL2/SDL_blendmode.h:
@@ -6605,13 +6591,15 @@ CMakeFiles/superz80_app.dir/src/app/TimeSource.cpp.o:
 
 /usr/include/bits/mathcalls-macros.h:
 
+/usr/include/SDL2/SDL.h:
+
+/usr/include/bits/types/mbstate_t.h:
+
+/home/djglxxii/src/Super_Z80/src/devices/input/InputController.h:
+
 /usr/include/c++/15.2.1/bits/vector.tcc:
 
-/usr/include/gnu/stubs-64.h:
-
 CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o:
-
-/home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h:
 
 /usr/include/bits/getopt_posix.h:
 
@@ -6621,21 +6609,17 @@ CMakeFiles/superz80_app.dir/src/app/InputHost.cpp.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/avx10_2-512bf16intrin.h:
 
-/usr/include/SDL2/SDL.h:
+/usr/include/gnu/stubs-64.h:
 
-/usr/include/bits/types/mbstate_t.h:
-
-/home/djglxxii/src/Super_Z80/src/devices/input/InputController.h:
-
-/usr/include/SDL2/SDL_power.h:
-
-/usr/include/asm/types.h:
+/usr/include/bits/pthreadtypes-arch.h:
 
 /usr/include/SDL2/SDL_stdinc.h:
 
 /usr/include/bits/cpu-set.h:
 
 /usr/include/SDL2/SDL_surface.h:
+
+/usr/include/SDL2/SDL_power.h:
 
 /usr/include/SDL2/SDL_sensor.h:
 

@@ -136,8 +136,9 @@ u8 Bus::In8(u8 port) {
         }
         return 0xFF;
       }
-      // Phase 12: APU I/O ports (0x60-0x7D)
-      if (port >= 0x60 && port <= 0x7D) {
+      // Phase 12: APU I/O ports (PSG=0x60, OPM=0x70-0x71, Master=0x7C-0x7D)
+      if (port == 0x60 || (port >= 0x70 && port <= 0x71) ||
+          (port >= 0x7C && port <= 0x7D)) {
         if (apu_) {
           return apu_->IO_Read(port);
         }
@@ -184,8 +185,9 @@ void Bus::Out8(u8 port, u8 value) {
         }
         return;
       }
-      // Phase 12: APU I/O ports (0x60-0x7D)
-      if (port >= 0x60 && port <= 0x7D) {
+      // Phase 12: APU I/O ports (PSG=0x60, OPM=0x70-0x71, Master=0x7C-0x7D)
+      if (port == 0x60 || (port >= 0x70 && port <= 0x71) ||
+          (port >= 0x7C && port <= 0x7D)) {
         if (apu_) {
           apu_->IO_Write(port, value, 0);
         }

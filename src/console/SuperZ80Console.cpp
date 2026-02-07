@@ -58,11 +58,6 @@ bool SuperZ80Console::LoadRom(const char* path) {
   if (!bus_.LoadRomFromFile(path)) {
     return false;
   }
-  // Phase 12: Attach ROM data to APU for PCM sample access
-  const auto& rom = bus_.GetRomData();
-  if (!rom.empty()) {
-    apu_.AttachCartridgeROM(rom.data(), rom.size());
-  }
   SZ_LOG_INFO("SuperZ80Console: ROM loaded from '%s'", path);
   return true;
 }

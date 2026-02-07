@@ -38,7 +38,6 @@ set(SUPERZ80_CORE_SOURCES
   src/devices/apu/AudioRingBuffer.cpp
   src/devices/apu/SN76489_PSG.cpp
   src/devices/apu/YM2151_OPM.cpp
-  src/devices/apu/PCM2Ch.cpp
   src/devices/bus/Bus.cpp
   src/devices/cart/Cartridge.cpp
   src/devices/dma/DMAEngine.cpp

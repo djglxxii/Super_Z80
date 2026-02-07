@@ -1,19 +1,17 @@
 ; Phase 12 Audio Test ROM
 ; Super_Z80 Emulator Bring-Up
 ;
-; Purpose: Validate PSG, YM2151, and PCM audio subsystems
+; Purpose: Validate PSG and YM2151 audio subsystems
 ;
 ; Test sequence:
 ; 1. Initialize interrupts
 ; 2. Play a PSG tone (440Hz A4), then change pitch after delay
 ; 3. Play a YM2151 note (simple sine, algorithm 7)
-; 4. Trigger PCM channel 0 with a short waveform stored in ROM
-; 5. Loop forever with periodic PCM retriggering
+; 4. Loop forever (PSG + YM2151 continue playing)
 ;
 ; Expected audible result:
 ; - PSG tone stable, then pitch change
 ; - YM2151 produces a stable note
-; - PCM produces short sample events
 
 ; =====================================================
 ; I/O Port Definitions
@@ -28,20 +26,6 @@ PSG_DATA    equ 0x60
 ; YM2151 (OPM)
 OPM_ADDR    equ 0x70
 OPM_DATA    equ 0x71
-
-; PCM Channel 0
-PCM0_START_LO equ 0x72
-PCM0_START_HI equ 0x73
-PCM0_LEN      equ 0x74
-PCM0_VOL      equ 0x75
-PCM0_CTRL     equ 0x76
-
-; PCM Channel 1
-PCM1_START_LO equ 0x77
-PCM1_START_HI equ 0x78
-PCM1_LEN      equ 0x79
-PCM1_VOL      equ 0x7A
-PCM1_CTRL     equ 0x7B
 
 ; Master audio
 AUDIO_MASTER_VOL equ 0x7C
@@ -225,48 +209,10 @@ init:
     out (OPM_DATA), a
 
     ; =====================================================
-    ; Step 4: PCM - Trigger a short sample on channel 0
-    ; Sample data is stored at pcm_sample_data in ROM
-    ; =====================================================
-
-    ; Set PCM0 start address (low byte of pcm_sample_data address)
-    ld a, pcm_sample_data & 0xFF
-    out (PCM0_START_LO), a
-    ld a, pcm_sample_data >> 8
-    out (PCM0_START_HI), a
-
-    ; Set length (number of samples)
-    ld a, PCM_SAMPLE_LEN
-    out (PCM0_LEN), a
-
-    ; Set volume
-    ld a, 0xC0              ; ~75% volume
-    out (PCM0_VOL), a
-
-    ; Trigger playback (bit 0 = TRIGGER)
-    ld a, 0x01
-    out (PCM0_CTRL), a
-
-    ; Clear trigger bit
-    ld a, 0x00
-    out (PCM0_CTRL), a
-
-    ; =====================================================
-    ; Main loop: wait and periodically retrigger PCM
+    ; Main loop: wait forever (PSG + YM2151 continue playing)
     ; =====================================================
 main_loop:
     call wait_120_frames
-
-    ; Retrigger PCM0
-    ld a, 0x01
-    out (PCM0_CTRL), a
-    ld a, 0x00
-    out (PCM0_CTRL), a
-
-    ; Check PCM0 BUSY (should be set right after trigger)
-    in a, (PCM0_CTRL)
-    ; bit 7 should be 1 (BUSY)
-
     jr main_loop
 
 ; =====================================================
@@ -288,21 +234,3 @@ wait_120_frames:
     pop hl
     jr nc, .wait_loop       ; If HL > FRAME_COUNT, keep waiting
     ret
-
-; =====================================================
-; PCM Sample Data - Short decaying "click" waveform
-; 8-bit unsigned (0x80 = zero crossing)
-; 64 samples at 48kHz = ~1.3ms burst
-; =====================================================
-PCM_SAMPLE_LEN equ 64
-
-pcm_sample_data:
-    ; A short decaying sine-ish click waveform
-    db 0x80, 0xB0, 0xD0, 0xE8, 0xF8, 0xFF, 0xF8, 0xE8  ; rising
-    db 0xD0, 0xB0, 0x80, 0x50, 0x30, 0x18, 0x08, 0x00  ; falling
-    db 0x08, 0x18, 0x30, 0x50, 0x80, 0xA8, 0xC8, 0xE0  ; second cycle (decayed)
-    db 0xF0, 0xF8, 0xF0, 0xE0, 0xC8, 0xA8, 0x80, 0x58
-    db 0x38, 0x20, 0x10, 0x08, 0x10, 0x20, 0x38, 0x58  ; third cycle (more decayed)
-    db 0x80, 0xA0, 0xB8, 0xC8, 0xD0, 0xD4, 0xD0, 0xC8
-    db 0xB8, 0xA0, 0x80, 0x60, 0x48, 0x38, 0x30, 0x2C  ; fourth cycle (fading)
-    db 0x30, 0x38, 0x48, 0x60, 0x80, 0x90, 0x98, 0x98  ; tail (near silence)

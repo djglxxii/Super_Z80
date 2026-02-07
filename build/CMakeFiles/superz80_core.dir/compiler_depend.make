@@ -9,7 +9,6 @@ CMakeFiles/superz80_core.dir/src/console/SuperZ80Console.cpp.o: /home/djglxxii/s
   /home/djglxxii/src/Super_Z80/src/cpu/Z80Cpu.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -831,7 +830,6 @@ CMakeFiles/superz80_core.dir/src/devices/apu/APU.cpp.o: /home/djglxxii/src/Super
   /home/djglxxii/src/Super_Z80/src/core/log/Logger.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /usr/include/alloca.h \
@@ -1322,41 +1320,6 @@ CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.o: /home/djglxx
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdint.h \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/syslimits.h
 
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
-  /usr/include/bits/libc-header-start.h \
-  /usr/include/bits/long-double.h \
-  /usr/include/bits/stdint-intn.h \
-  /usr/include/bits/stdint-least.h \
-  /usr/include/bits/stdint-uintn.h \
-  /usr/include/bits/time64.h \
-  /usr/include/bits/timesize.h \
-  /usr/include/bits/types.h \
-  /usr/include/bits/types/__locale_t.h \
-  /usr/include/bits/types/locale_t.h \
-  /usr/include/bits/typesizes.h \
-  /usr/include/bits/wchar.h \
-  /usr/include/bits/wordsize.h \
-  /usr/include/c++/15.2.1/bits/version.h \
-  /usr/include/c++/15.2.1/cstddef \
-  /usr/include/c++/15.2.1/cstdint \
-  /usr/include/c++/15.2.1/cstring \
-  /usr/include/c++/15.2.1/pstl/pstl_config.h \
-  /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++config.h \
-  /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/cpu_defines.h \
-  /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/os_defines.h \
-  /usr/include/features-time64.h \
-  /usr/include/features.h \
-  /usr/include/gnu/stubs-64.h \
-  /usr/include/gnu/stubs.h \
-  /usr/include/stdc-predef.h \
-  /usr/include/stdint.h \
-  /usr/include/string.h \
-  /usr/include/strings.h \
-  /usr/include/sys/cdefs.h \
-  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h \
-  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stdint.h
-
 CMakeFiles/superz80_core.dir/src/devices/apu/SN76489_PSG.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.cpp \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /usr/include/alloca.h \
@@ -1596,7 +1559,6 @@ CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o: /home/djglxxii/src/Super
   /home/djglxxii/src/Super_Z80/src/core/types.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -2451,7 +2413,6 @@ CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o: /home/djglxx
   /home/djglxxii/src/Super_Z80/src/cpu/Z80Cpu.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/APU.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h \
-  /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.h \
   /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h \
   /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.h \
@@ -3562,8 +3523,6 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /home/djglxxii/src/Super_Z80/src/devices/apu/SN76489_PSG.cpp:
 
-/home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp:
-
 /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.cpp:
 
 /home/djglxxii/src/Super_Z80/src/emulator/cpu/Z80ExCpuPhase2.cpp:
@@ -3652,11 +3611,15 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /usr/include/stdlib.h:
 
-/usr/include/bits/fp-fast.h:
+/home/djglxxii/src/Super_Z80/src/devices/irq/IRQController.cpp:
 
-/usr/include/wctype.h:
+/usr/include/stdio.h:
 
-/usr/include/sched.h:
+/usr/include/bits/wordsize.h:
+
+/usr/include/c++/15.2.1/ostream:
+
+/home/djglxxii/src/Super_Z80/src/devices/dma/DMAEngine.h:
 
 /usr/include/c++/15.2.1/bits/cxxabi_init_exception.h:
 
@@ -3693,16 +3656,6 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /usr/include/bits/xopen_lim.h:
 
 /usr/include/c++/15.2.1/bits/postypes.h:
-
-/home/djglxxii/src/Super_Z80/src/devices/irq/IRQController.cpp:
-
-/usr/include/stdio.h:
-
-/usr/include/bits/wordsize.h:
-
-/usr/include/c++/15.2.1/ostream:
-
-/home/djglxxii/src/Super_Z80/src/devices/dma/DMAEngine.h:
 
 /usr/include/bits/wctype-wchar.h:
 
@@ -3818,6 +3771,8 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /usr/include/c++/15.2.1/bits/stl_bvector.h:
 
+/usr/include/bits/confname.h:
+
 /usr/include/c++/15.2.1/ext/atomicity.h:
 
 /usr/include/bits/types/struct_timespec.h:
@@ -3839,6 +3794,8 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /usr/include/limits.h:
 
 /usr/include/bits/floatn.h:
+
+/usr/include/asm/types.h:
 
 /usr/include/c++/15.2.1/bits/locale_classes.h:
 
@@ -3874,42 +3831,6 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /home/djglxxii/src/Super_Z80/src/devices/apu/AudioRingBuffer.h:
 
-/usr/include/c++/15.2.1/cstdlib:
-
-/usr/include/sys/syscall.h:
-
-/usr/include/c++/15.2.1/bits/stl_algobase.h:
-
-/usr/include/bits/confname.h:
-
-/usr/include/c++/15.2.1/bits/cpp_type_traits.h:
-
-/usr/include/c++/15.2.1/bits/istream.tcc:
-
-/usr/include/c++/15.2.1/limits:
-
-/usr/include/bits/struct_mutex.h:
-
-/usr/include/c++/15.2.1/bits/stl_construct.h:
-
-/usr/include/bits/long-double.h:
-
-/usr/include/c++/15.2.1/tr1/riemann_zeta.tcc:
-
-/usr/include/bits/types/__fpos_t.h:
-
-/usr/include/asm/unistd_64.h:
-
-/home/djglxxii/src/Super_Z80/src/devices/scheduler/Scheduler.h:
-
-/usr/include/bits/types/clockid_t.h:
-
-/usr/include/bits/stdint-intn.h:
-
-/usr/include/linux/close_range.h:
-
-/home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h:
-
 /home/djglxxii/src/Super_Z80/src/emulator/io/IODevice.cpp:
 
 /usr/include/string.h:
@@ -3926,11 +3847,27 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /usr/include/bits/setjmp.h:
 
+/home/djglxxii/src/Super_Z80/src/devices/scheduler/Scheduler.h:
+
+/usr/include/bits/types/clockid_t.h:
+
+/usr/include/bits/stdint-intn.h:
+
+/usr/include/linux/close_range.h:
+
+/home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.h:
+
 /home/djglxxii/src/Super_Z80/src/devices/dma/DMAEngine.cpp:
 
 /usr/include/bits/libc-header-start.h:
 
-/usr/include/asm/types.h:
+/usr/include/c++/15.2.1/tr1/riemann_zeta.tcc:
+
+/usr/include/bits/types/__fpos_t.h:
+
+/usr/include/asm/unistd_64.h:
+
+/usr/include/bits/long-double.h:
 
 /usr/include/bits/endian.h:
 
@@ -3966,6 +3903,16 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /usr/include/c++/15.2.1/bit:
 
+/usr/include/c++/15.2.1/bits/cpp_type_traits.h:
+
+/usr/include/c++/15.2.1/bits/istream.tcc:
+
+/usr/include/c++/15.2.1/limits:
+
+/usr/include/bits/struct_mutex.h:
+
+/usr/include/c++/15.2.1/bits/stl_construct.h:
+
 /usr/include/c++/15.2.1/bits/basic_string.tcc:
 
 /usr/include/bits/endianness.h:
@@ -3977,12 +3924,6 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /home/djglxxii/src/Super_Z80/src/core/log/Logger.cpp:
 
 /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/atomic_word.h:
-
-/usr/include/bits/types/__FILE.h:
-
-/usr/include/bits/sched.h:
-
-/usr/include/features.h:
 
 /usr/include/bits/types/struct_FILE.h:
 
@@ -4001,6 +3942,18 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /usr/include/c++/15.2.1/ext/numeric_traits.h:
 
 /usr/include/bits/getopt_core.h:
+
+/usr/include/bits/types/__FILE.h:
+
+/usr/include/features.h:
+
+/usr/include/bits/sched.h:
+
+/usr/include/sys/syscall.h:
+
+/usr/include/c++/15.2.1/bits/stl_algobase.h:
+
+/usr/include/c++/15.2.1/cstdlib:
 
 /usr/include/bits/pthread_stack_min-dynamic.h:
 
@@ -4068,9 +4021,9 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 
 /usr/include/c++/15.2.1/bits/new_allocator.h:
 
-/usr/include/bits/stdint-uintn.h:
-
 /usr/include/asm/errno.h:
+
+/usr/include/bits/stdint-uintn.h:
 
 /usr/include/c++/15.2.1/system_error:
 
@@ -4091,8 +4044,6 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /usr/include/c++/15.2.1/initializer_list:
 
 /usr/include/c++/15.2.1/bits/refwrap.h:
-
-/home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.h:
 
 /usr/include/bits/cpu-set.h:
 
@@ -4259,3 +4210,9 @@ CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Sup
 /usr/include/linux/sched/types.h:
 
 /usr/include/linux/stddef.h:
+
+/usr/include/bits/fp-fast.h:
+
+/usr/include/wctype.h:
+
+/usr/include/sched.h:

@@ -282,24 +282,10 @@ CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.s"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/djglxxii/src/Super_Z80/src/devices/apu/YM2151_OPM.cpp -o CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.s
 
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o: CMakeFiles/superz80_core.dir/flags.make
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp
-
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp > CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.i
-
-CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/djglxxii/src/Super_Z80/src/devices/apu/PCM2Ch.cpp -o CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.s
-
 CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.cpp
 CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/bus/Bus.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.i: cmake_force
@@ -313,7 +299,7 @@ CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/cart/Cartridge.cpp
 CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/cart/Cartridge.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.i: cmake_force
@@ -327,7 +313,7 @@ CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/dma/DMAEngine.cpp
 CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/dma/DMAEngine.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.i: cmake_force
@@ -341,7 +327,7 @@ CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/input/InputController.cpp
 CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/input/InputController.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.i: cmake_force
@@ -355,7 +341,7 @@ CMakeFiles/superz80_core.dir/src/devices/input/InputController.cpp.s: cmake_forc
 CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/irq/IRQController.cpp
 CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/irq/IRQController.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.i: cmake_force
@@ -369,7 +355,7 @@ CMakeFiles/superz80_core.dir/src/devices/irq/IRQController.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/ppu/PPU.cpp
 CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/ppu/PPU.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.i: cmake_force
@@ -383,7 +369,7 @@ CMakeFiles/superz80_core.dir/src/devices/ppu/PPU.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o: /home/djglxxii/src/Super_Z80/src/devices/scheduler/Scheduler.cpp
 CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_22) "Building CXX object CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o"
 	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o -MF CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o.d -o CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.o -c /home/djglxxii/src/Super_Z80/src/devices/scheduler/Scheduler.cpp
 
 CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.i: cmake_force
@@ -397,7 +383,7 @@ CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler.cpp.s: cmake_force
 CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: CMakeFiles/superz80_core.dir/flags.make
 CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: /home/djglxxii/src/Super_Z80/third_party/z80ex/z80ex.c
 CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o: CMakeFiles/superz80_core.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Building C object CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_23) "Building C object CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o"
 	/usr/bin/cc $(C_DEFINES) $(C_INCLUDES) -x c $(C_FLAGS) -MD -MT CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o -MF CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o.d -o CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o -c /home/djglxxii/src/Super_Z80/third_party/z80ex/z80ex.c
 
 CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.i: cmake_force
@@ -425,7 +411,6 @@ superz80_core_OBJECTS = \
 "CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.o" \
 "CMakeFiles/superz80_core.dir/src/devices/apu/SN76489_PSG.cpp.o" \
 "CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.o" \
-"CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o" \
 "CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o" \
 "CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o" \
 "CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o" \
@@ -453,7 +438,6 @@ libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/apu/APU.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/apu/SN76489_PSG.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.o
-libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/bus/Bus.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/cart/Cartridge.cpp.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/dma/DMAEngine.cpp.o
@@ -464,7 +448,7 @@ libsuperz80_core.a: CMakeFiles/superz80_core.dir/src/devices/scheduler/Scheduler
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/third_party/z80ex/z80ex.c.o
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/build.make
 libsuperz80_core.a: CMakeFiles/superz80_core.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_25) "Linking CXX static library libsuperz80_core.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/djglxxii/src/Super_Z80/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_24) "Linking CXX static library libsuperz80_core.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/superz80_core.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/superz80_core.dir/link.txt --verbose=$(VERBOSE)
 

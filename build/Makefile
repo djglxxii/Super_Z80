@@ -914,30 +914,6 @@ src/devices/apu/AudioRingBuffer.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.s
 .PHONY : src/devices/apu/AudioRingBuffer.cpp.s
 
-src/devices/apu/PCM2Ch.o: src/devices/apu/PCM2Ch.cpp.o
-.PHONY : src/devices/apu/PCM2Ch.o
-
-# target to build an object file
-src/devices/apu/PCM2Ch.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o
-.PHONY : src/devices/apu/PCM2Ch.cpp.o
-
-src/devices/apu/PCM2Ch.i: src/devices/apu/PCM2Ch.cpp.i
-.PHONY : src/devices/apu/PCM2Ch.i
-
-# target to preprocess a source file
-src/devices/apu/PCM2Ch.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.i
-.PHONY : src/devices/apu/PCM2Ch.cpp.i
-
-src/devices/apu/PCM2Ch.s: src/devices/apu/PCM2Ch.cpp.s
-.PHONY : src/devices/apu/PCM2Ch.s
-
-# target to generate assembly for a file
-src/devices/apu/PCM2Ch.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/superz80_core.dir/build.make CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.s
-.PHONY : src/devices/apu/PCM2Ch.cpp.s
-
 src/devices/apu/SN76489_PSG.o: src/devices/apu/SN76489_PSG.cpp.o
 .PHONY : src/devices/apu/SN76489_PSG.o
 
@@ -1522,9 +1498,6 @@ help:
 	@echo "... src/devices/apu/AudioRingBuffer.o"
 	@echo "... src/devices/apu/AudioRingBuffer.i"
 	@echo "... src/devices/apu/AudioRingBuffer.s"
-	@echo "... src/devices/apu/PCM2Ch.o"
-	@echo "... src/devices/apu/PCM2Ch.i"
-	@echo "... src/devices/apu/PCM2Ch.s"
 	@echo "... src/devices/apu/SN76489_PSG.o"
 	@echo "... src/devices/apu/SN76489_PSG.i"
 	@echo "... src/devices/apu/SN76489_PSG.s"

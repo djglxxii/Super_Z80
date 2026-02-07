@@ -75,9 +75,6 @@ class Bus {
   // Phase 12: Wire APU for audio I/O port access
   void SetAPU(sz::apu::APU* apu) { apu_ = apu; }
 
-  // Phase 12: ROM data access (for PCM samples)
-  const std::vector<u8>& GetRomData() const { return rom_; }
-
  private:
   sz::irq::IRQController* irq_ = nullptr;
   sz::ppu::PPU* ppu_ = nullptr;

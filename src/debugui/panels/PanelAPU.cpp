@@ -45,7 +45,6 @@ void PanelAPU::Draw(sz::console::SuperZ80Console& console) {
   auto& apu = console.GetAPU();
   psg_muted_ = apu.IsPSGMuted();
   opm_muted_ = apu.IsOPMMuted();
-  pcm_muted_ = apu.IsPCMMuted();
 
   if (ImGui::Checkbox("Mute PSG", &psg_muted_)) {
     apu.SetMutePSG(psg_muted_);
@@ -53,10 +52,6 @@ void PanelAPU::Draw(sz::console::SuperZ80Console& console) {
   ImGui::SameLine();
   if (ImGui::Checkbox("Mute OPM", &opm_muted_)) {
     apu.SetMuteOPM(opm_muted_);
-  }
-  ImGui::SameLine();
-  if (ImGui::Checkbox("Mute PCM", &pcm_muted_)) {
-    apu.SetMutePCM(pcm_muted_);
   }
 
   ImGui::Separator();
@@ -74,8 +69,6 @@ void PanelAPU::Draw(sz::console::SuperZ80Console& console) {
       if (w.port == 0x60) label = "PSG_DATA";
       else if (w.port == 0x70) label = "OPM_ADDR";
       else if (w.port == 0x71) label = "OPM_DATA";
-      else if (w.port >= 0x72 && w.port <= 0x76) label = "PCM0";
-      else if (w.port >= 0x77 && w.port <= 0x7B) label = "PCM1";
       else if (w.port == 0x7C) label = "MASTER_VOL";
       else if (w.port == 0x7D) label = "PAN";
 

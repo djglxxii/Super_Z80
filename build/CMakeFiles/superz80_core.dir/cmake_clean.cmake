@@ -13,8 +13,6 @@ file(REMOVE_RECURSE
   "CMakeFiles/superz80_core.dir/src/devices/apu/APU.cpp.o.d"
   "CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.o"
   "CMakeFiles/superz80_core.dir/src/devices/apu/AudioRingBuffer.cpp.o.d"
-  "CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o"
-  "CMakeFiles/superz80_core.dir/src/devices/apu/PCM2Ch.cpp.o.d"
   "CMakeFiles/superz80_core.dir/src/devices/apu/SN76489_PSG.cpp.o"
   "CMakeFiles/superz80_core.dir/src/devices/apu/SN76489_PSG.cpp.o.d"
   "CMakeFiles/superz80_core.dir/src/devices/apu/YM2151_OPM.cpp.o"

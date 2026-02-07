@@ -87,7 +87,7 @@
 * ROM size
 * RAM size
 * Region (NTSC)
-* Feature flags (FM, PCM, save RAM, etc.)
+* Feature flags (FM, save RAM, etc.)
 
 ### Boot Model
 
@@ -238,7 +238,7 @@ This balance intentionally exceeds NES/SMS-class audio while remaining plausible
 | `0x00–0x1F` | Memory mapper & video registers |
 | `0x20–0x3F` | Sprite system & DMA control     |
 | `0x40–0x5F` | Controller input                |
-| `0x60–0x7F` | Audio (PSG / YM2151 / PCM)      |
+| `0x60–0x7F` | Audio (PSG / YM2151)            |
 | `0x80–0x9F` | Timer & system control          |
 
 Exact register definitions deferred to implementation phase.
@@ -253,7 +253,7 @@ Exact register definitions deferred to implementation phase.
 * 48 KB VRAM
 * 32 KB Work RAM
 * 48 sprites total, 16 per scanline
-* YM2151 FM synthesis + PSG + 2-channel PCM
+* YM2151 FM synthesis + PSG
 * VBlank-only RAM → VRAM DMA
 * Optional cartridge save RAM
 * Cartridge-only, no BIOS

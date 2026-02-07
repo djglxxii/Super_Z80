@@ -6,7 +6,6 @@
 #include <memory>
 
 #include "devices/apu/AudioRingBuffer.h"
-#include "devices/apu/PCM2Ch.h"
 #include "devices/apu/SN76489_PSG.h"
 #include "devices/apu/YM2151_OPM.h"
 
@@ -50,7 +49,6 @@ struct DebugState {
   APUAudioStats stats;
   bool psg_muted = false;
   bool opm_muted = false;
-  bool pcm_muted = false;
 };
 
 class APU {
@@ -60,9 +58,7 @@ class APU {
 
   void Reset();
 
-  void AttachCartridgeROM(const uint8_t* rom_data, size_t rom_size);
-
-  // I/O dispatch (called by Bus for ports 0x60-0x7D)
+  // I/O dispatch (called by Bus for ports 0x60-0x71, 0x7C-0x7D)
   void IO_Write(uint8_t port, uint8_t value, uint64_t cpu_cycle);
   uint8_t IO_Read(uint8_t port);
 
@@ -82,11 +78,9 @@ class APU {
 
   void SetMutePSG(bool mute);
   void SetMuteOPM(bool mute);
-  void SetMutePCM(bool mute);
 
   bool IsPSGMuted() const { return psg_muted_; }
   bool IsOPMMuted() const { return opm_muted_; }
-  bool IsPCMMuted() const { return pcm_muted_; }
 
  private:
   void GenerateFrames(int frames);
@@ -96,7 +90,6 @@ class APU {
   // Chip instances
   SN76489_PSG psg_;
   YM2151_OPM opm_;
-  PCM2Ch pcm_;
 
   // Ring buffer
   std::unique_ptr<AudioRingBuffer> ring_;
@@ -106,9 +99,8 @@ class APU {
   uint64_t cycles_per_sample_fp_ = 0;  // Q32.32
 
   // Mixer gains
-  float psg_gain_ = 0.20f;
-  float opm_gain_ = 0.35f;
-  float pcm_gain_ = 0.35f;
+  float psg_gain_ = 0.33f;
+  float opm_gain_ = 0.50f;
 
   // Master volume (0-255, register at 0x7C)
   uint8_t master_vol_ = 0xFF;
@@ -117,7 +109,6 @@ class APU {
   // Mute toggles
   bool psg_muted_ = false;
   bool opm_muted_ = false;
-  bool pcm_muted_ = false;
 
   // Debug: last writes ring buffer
   std::array<APUDebugLastWrite, kMaxLastWrites> last_writes_ = {};
